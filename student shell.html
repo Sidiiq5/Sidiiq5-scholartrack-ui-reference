@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScholarTrack — Global Shell</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            navy: {
+              950: '#05080f',
+              900: '#0B0F19',
+              800: '#111827',
+              700: '#1F2937',
+            },
+            brand: {
+              500: '#3B82F6',
+              600: '#2563EB',
+              700: '#1D4ED8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0B0F19;
+      color: #F9FAFB;
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Global Background Elements */
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: 
+        radial-gradient(circle at 15% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 85% 100%, rgba(29, 78, 216, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    /* Glass Panels */
+    .glass-surface {
+      background: rgba(17, 24, 39, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    
+    /* Navigation Link States */
+    .nav-link {
+      position: relative;
+      color: #9CA3AF;
+      transition: color 0.2s ease;
+    }
+    .nav-link:hover {
+      color: #F3F4F6;
+    }
+    .nav-link.active {
+      color: #FFFFFF;
+      font-weight: 500;
+    }
+    .nav-link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1.5rem;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: #3B82F6;
+      border-radius: 2px 2px 0 0;
+      box-shadow: 0 -2px 10px rgba(59, 130, 246, 0.5);
+    }
+
+    /* Inputs */
+    .st-input {
+      background: rgba(13, 17, 29, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.2s ease;
+    }
+    .st-input:focus {
+      outline: none;
+      border-color: #3B82F6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      background: rgba(13, 17, 29, 0.9);
+    }
+    .st-input.error {
+      border-color: #EF4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+    .st-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Buttons */
+    .btn {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .btn:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+    .btn-primary {
+      background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Animations */
+    .fade-enter { opacity: 0; transform: translateY(10px); }
+    .fade-enter-active { opacity: 1; transform: translateY(0); transition: all 0.3s ease-out; }
+    
+    .toast-enter { transform: translateY(150%) scale(0.9); opacity: 0; }
+    .toast-enter-active { transform: translateY(0) scale(1); opacity: 1; }
+    
+    /* Hide scrollbar for clean aesthetic */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0B0F19; }
+    ::-webkit-scrollbar-thumb { background: #1F2937; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #374151; }
+  </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+  
+  <div class="bg-glow"></div>
+
+  <!-- DEMO CONTROLS (NOT PART OF ACTUAL APP) -->
+  <div class="fixed bottom-4 left-4 z-50 glass-surface p-3 rounded-xl shadow-2xl flex flex-col gap-2 border-brand-500/30">
+    <div class="text-[10px] uppercase tracking-wider text-brand-400 font-bold mb-1">Prototype Controls</div>
+    <label class="flex items-center gap-2 cursor-pointer text-sm">
+      <input type="checkbox" id="auth-toggle" class="form-checkbox rounded bg-navy-800 border-white/20 text-brand-500 focus:ring-brand-500 focus:ring-offset-navy-900 h-4 w-4" onchange="toggleAuthState()">
+      <span class="text-gray-300">Simulate Authenticated User</span>
+    </label>
+  </div>
+
+  <!-- GLOBAL NAVIGATION -->
+  <header class="fixed top-0 inset-x-0 z-40 glass-surface border-b border-white/10 transition-all duration-300 h-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+      
+      <!-- Left: Logo & Nav -->
+      <div class="flex items-center gap-8">
+        <!-- Logo -->
+        <a href="#" class="flex items-center gap-2.5 group outline-none rounded-lg focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-900">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20 border border-blue-400/30 group-hover:scale-105 transition-transform">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+            </svg>
+          </div>
+          <span class="text-lg font-bold tracking-tight text-white group-hover:text-gray-100 transition-colors">Scholar<span class="text-blue-400">Track</span></span>
+        </a>
+
+        <!-- Desktop Links -->
+        <nav class="hidden md:flex items-center gap-6 text-sm font-medium h-16">
+          <a href="#" onclick="setActiveNav(this)" class="nav-link active h-full flex items-center px-1">Find Scholarships</a>
+          <a href="#" onclick="setActiveNav(this, true)" class="nav-link h-full flex items-center px-1">My Trackers</a>
+          <a href="#" onclick="setActiveNav(this)" class="nav-link h-full flex items-center px-1">Resources</a>
+        </nav>
+      </div>
+
+      <!-- Right: Auth Actions -->
+      <div class="hidden md:flex items-center gap-4">
+        
+        <!-- Unauthenticated State -->
+        <div id="nav-unauth" class="flex items-center gap-4 transition-opacity duration-300">
+          <a href="#" class="text-sm font-medium text-gray-300 hover:text-white transition-colors">Log In</a>
+        </div>
+
+        <!-- Authenticated State -->
+        <div id="nav-auth" class="flex items-center gap-3 transition-opacity duration-300 hidden opacity-0">
+          <button class="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors relative" aria-label="Notifications" onclick="showToast('No new notifications', 'info')">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            <span class="absolute top-2 right-2 w-2 h-2 bg-brand-500 rounded-full"></span>
+          </button>
+          
+          <div class="h-5 w-px bg-white/10 mx-1"></div>
+          
+          <button class="flex items-center gap-2 hover:bg-white/5 py-1.5 px-2.5 rounded-lg transition-colors group">
+            <div class="w-7 h-7 rounded-full bg-navy-700 border border-white/10 flex items-center justify-center text-xs font-bold text-white overflow-hidden group-hover:border-brand-500/50 transition-colors">
+              JL
+            </div>
+            <svg class="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <button class="md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 text-gray-300 transition-colors" onclick="toggleMobileMenu()">
+        <svg id="menu-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+    </div>
+  </header>
+
+  <!-- Mobile Dropdown Menu -->
+  <div id="mobile-menu" class="fixed inset-0 top-16 z-30 glass-surface border-t border-white/10 flex-col hidden opacity-0 transition-opacity duration-200">
+    <nav class="flex flex-col p-4 gap-1">
+      <a href="#" class="px-4 py-3 rounded-lg bg-white/5 text-white font-medium">Find Scholarships</a>
+      <a href="#" class="px-4 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 font-medium flex items-center justify-between" onclick="checkAuthMobile(event)">
+        My Trackers
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </a>
+      <a href="#" class="px-4 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 font-medium">Resources</a>
+      
+      <div class="h-px w-full bg-white/10 my-3"></div>
+      
+      <!-- Mobile Unauth -->
+      <div id="mobile-unauth" class="flex flex-col gap-2">
+        <a href="#" class="px-4 py-3 rounded-lg text-brand-400 font-medium">Log In</a>
+      </div>
+
+      <!-- Mobile Auth -->
+      <div id="mobile-auth" class="hidden flex-col gap-1">
+        <a href="#" class="px-4 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 font-medium flex items-center justify-between">
+          Notifications
+          <span class="bg-brand-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">New</span>
+        </a>
+        <a href="#" class="px-4 py-3 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 font-medium">Account Settings</a>
+        <a href="#" class="px-4 py-3 rounded-lg text-red-400 hover:bg-red-400/10 font-medium mt-2" onclick="document.getElementById('auth-toggle').click()">Log Out</a>
+      </div>
+    </nav>
+  </div>
+
+  <!-- GLOBAL CONTENT CONTAINER -->
+  <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-16 flex flex-col gap-8">
+    
+    <!-- Page Header Area -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Design System Shell</h1>
+        <p class="text-sm text-gray-400 mt-1">Interactive showcase of global UI patterns.</p>
+      </div>
+    </div>
+
+    <!-- UI COMPONENTS SHOWCASE -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Left Column: Forms & Controls -->
+      <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Surface Card -->
+        <div class="glass-surface p-6 rounded-2xl">
+          <h2 class="text-lg font-semibold text-white mb-6 border-b border-white/10 pb-4">Inputs & Actions</h2>
+          
+          <div class="grid sm:grid-cols-2 gap-8">
+            <!-- Inputs -->
+            <div class="space-y-4">
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Standard Input</label>
+                <input type="text" class="st-input w-full px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-500" placeholder="Placeholder text...">
+              </div>
+              
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Error State</label>
+                <input type="text" class="st-input error w-full px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-500" value="Invalid input data">
+                <p class="text-xs text-red-400">This field is required.</p>
+              </div>
+
+              <div class="space-y-1.5">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Disabled State</label>
+                <input type="text" class="st-input w-full px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-500" value="Read only data" disabled>
+              </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="space-y-4">
+              <div class="space-y-3">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Primary Actions</label>
+                <button class="btn btn-primary w-full py-2.5 px-4 rounded-xl font-semibold text-sm text-white">Save Scholarship</button>
+                <button class="btn btn-primary w-full py-2.5 px-4 rounded-xl font-semibold text-sm text-white" disabled>
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  Processing...
+                </button>
+              </div>
+
+              <div class="space-y-3 pt-2">
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-400">Secondary Actions</label>
+                <button class="btn btn-secondary w-full py-2.5 px-4 rounded-xl font-medium text-sm text-white">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overlays Card -->
+        <div class="glass-surface p-6 rounded-2xl">
+          <h2 class="text-lg font-semibold text-white mb-6 border-b border-white/10 pb-4">Global Overlays</h2>
+          <div class="flex flex-wrap gap-4">
+            <button onclick="showToast('Scholarship saved to your Tracker.', 'success')" class="btn btn-secondary py-2 px-4 rounded-lg text-sm text-gray-300">Trigger Success Toast</button>
+            <button onclick="showToast('Connection failed. Please try again.', 'error')" class="btn btn-secondary py-2 px-4 rounded-lg text-sm text-gray-300">Trigger Error Toast</button>
+            <button onclick="openModal()" class="btn btn-primary py-2 px-4 rounded-lg text-sm text-white ml-auto">Open Modal Dialog</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: State Patterns -->
+      <div class="space-y-6">
+        
+        <!-- Empty State Example -->
+        <div class="glass-surface p-8 rounded-2xl flex flex-col items-center justify-center text-center h-64 border-dashed border border-white/20">
+          <div class="w-12 h-12 rounded-full bg-navy-800 border border-white/5 flex items-center justify-center mb-4 text-gray-500">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+          </div>
+          <h3 class="text-sm font-semibold text-white mb-1">No saved scholarships</h3>
+          <p class="text-xs text-gray-400 max-w-[200px] mb-4 leading-relaxed">Explore scholarships and save the ones you want to prepare for.</p>
+          <button class="btn btn-primary py-1.5 px-4 rounded-lg text-xs font-medium text-white">Find Scholarships</button>
+        </div>
+
+        <!-- Loading State Example -->
+        <div class="glass-surface p-6 rounded-2xl h-64 flex flex-col gap-4">
+          <div class="animate-pulse flex space-x-4">
+            <div class="rounded-lg bg-white/5 h-16 w-16"></div>
+            <div class="flex-1 space-y-3 py-1">
+              <div class="h-3 bg-white/5 rounded w-3/4"></div>
+              <div class="h-3 bg-white/5 rounded w-1/2"></div>
+            </div>
+          </div>
+          <div class="animate-pulse space-y-3 mt-4">
+            <div class="h-3 bg-white/5 rounded w-full"></div>
+            <div class="h-3 bg-white/5 rounded w-5/6"></div>
+            <div class="h-3 bg-white/5 rounded w-4/6"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- GLOBAL MODAL (Hidden by default) -->
+  <div id="global-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="glass-surface w-full max-w-md rounded-2xl p-6 relative transform scale-95 transition-transform duration-300" id="modal-content">
+      <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+      <h3 class="text-xl font-bold text-white mb-2">Remove Scholarship?</h3>
+      <p class="text-sm text-gray-400 mb-6">Are you sure you want to remove "Global Excellence Tech Grant" from your tracker? All your preparation notes will be kept.</p>
+      <div class="flex gap-3 justify-end">
+        <button onclick="closeModal()" class="btn btn-secondary py-2 px-4 rounded-xl text-sm font-medium text-white">Cancel</button>
+        <button onclick="closeModal(); showToast('Scholarship removed', 'info')" class="bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 py-2 px-4 rounded-xl text-sm font-semibold transition-colors">Remove</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GLOBAL TOAST CONTAINER -->
+  <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none" id="toast-container">
+    <!-- Toasts injected here -->
+  </div>
+
+  <script>
+    // --- Navigation Auth State Simulation ---
+    function toggleAuthState() {
+      const isAuth = document.getElementById('auth-toggle').checked;
+      
+      const unauthDesk = document.getElementById('nav-unauth');
+      const authDesk = document.getElementById('nav-auth');
+      const unauthMob = document.getElementById('mobile-unauth');
+      const authMob = document.getElementById('mobile-auth');
+
+      if (isAuth) {
+        unauthDesk.classList.add('hidden', 'opacity-0');
+        unauthMob.classList.add('hidden');
+        
+        setTimeout(() => {
+          authDesk.classList.remove('hidden');
+          authMob.classList.remove('hidden');
+          authMob.classList.add('flex');
+          // Trigger reflow for fade in
+          void authDesk.offsetWidth; 
+          authDesk.classList.remove('opacity-0');
+        }, 300);
+        
+        showToast('Logged in successfully', 'success');
+      } else {
+        authDesk.classList.add('hidden', 'opacity-0');
+        authMob.classList.add('hidden');
+        authMob.classList.remove('flex');
+
+        setTimeout(() => {
+          unauthDesk.classList.remove('hidden');
+          unauthMob.classList.remove('hidden');
+          void unauthDesk.offsetWidth;
+          unauthDesk.classList.remove('opacity-0');
+        }, 300);
+
+        showToast('Logged out', 'info');
+      }
+    }
+
+    // Auth gate for protected links
+    function checkAuthMobile(e) {
+      if (!document.getElementById('auth-toggle').checked) {
+        e.preventDefault();
+        toggleMobileMenu(); // Close menu
+        showToast('Please Log In to access My Trackers', 'error');
+      }
+    }
+
+    // Set Active Nav Link (Desktop)
+    function setActiveNav(element, requiresAuth = false) {
+      if (requiresAuth && !document.getElementById('auth-toggle').checked) {
+        showToast('Please Log In to access My Trackers', 'error');
+        return;
+      }
+      document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+      element.classList.add('active');
+    }
+
+    // --- Mobile Menu Toggle ---
+    let mobileMenuOpen = false;
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const icon = document.getElementById('menu-icon');
+      
+      mobileMenuOpen = !mobileMenuOpen;
+      if (mobileMenuOpen) {
+        menu.classList.remove('hidden');
+        setTimeout(() => { menu.classList.remove('opacity-0'); }, 10);
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+      } else {
+        menu.classList.add('opacity-0');
+        setTimeout(() => { menu.classList.add('hidden'); }, 200);
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>';
+      }
+    }
+
+    // --- Modal Logic ---
+    function openModal() {
+      const modal = document.getElementById('global-modal');
+      const content = document.getElementById('modal-content');
+      modal.classList.remove('hidden');
+      setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+      }, 10);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('global-modal');
+      const content = document.getElementById('modal-content');
+      modal.classList.add('opacity-0');
+      content.classList.remove('scale-100');
+      content.classList.add('scale-95');
+      setTimeout(() => {
+        modal.classList.add('hidden');
+      }, 300);
+    }
+
+    // --- Toast System ---
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      
+      const toast = document.createElement('div');
+      toast.className = 'glass-surface px-4 py-3 rounded-xl shadow-2xl flex items-start gap-3 pointer-events-auto transform transition-all duration-300 toast-enter';
+      
+      let iconSvg, iconColor;
+      if (type === 'success') {
+        iconColor = 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
+        iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+      } else if (type === 'error') {
+        iconColor = 'text-red-400 bg-red-400/10 border-red-400/20';
+        iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+      } else {
+        iconColor = 'text-blue-400 bg-blue-400/10 border-blue-400/20';
+        iconSvg = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+      }
+
+      toast.innerHTML = `
+        <div class="w-7 h-7 rounded-lg border flex flex-shrink-0 items-center justify-center ${iconColor}">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${iconSvg}</svg>
+        </div>
+        <div class="flex-1 mt-0.5">
+          <p class="text-sm font-medium text-white leading-snug">${message}</p>
+        </div>
+        <button class="text-gray-500 hover:text-white transition-colors" onclick="this.parentElement.remove()">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      `;
+      
+      container.appendChild(toast);
+      
+      // Trigger animation
+      requestAnimationFrame(() => {
+        toast.classList.remove('toast-enter');
+        toast.classList.add('toast-enter-active');
+      });
+
+      // Auto-remove
+      setTimeout(() => {
+        toast.classList.remove('toast-enter-active');
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
