@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScholarTrack — Admin Workspace</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Font Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#060B17',
+            navy: {
+              900: '#060B17',
+              800: '#0B132B',
+              700: '#0F172A',
+              600: '#1E293B',
+              500: '#334155',
+            },
+            accent: {
+              blue: '#0084FF',
+              hover: '#0070D8',
+              glow: 'rgba(0, 132, 255, 0.25)',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #060B17;
+      color: #F1F5F9;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ScholarTrack Glassmorphism Panels */
+    .glass-panel {
+      background: rgba(11, 19, 43, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-card {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-card:hover {
+      border-color: rgba(0, 132, 255, 0.3);
+    }
+
+    .glass-input {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+      transition: all 0.2s ease;
+    }
+
+    .glass-input:focus {
+      border-color: #0084FF;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.2);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(6, 11, 23, 0.8);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 132, 255, 0.5);
+    }
+
+    /* Custom animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Active Sidebar Navigation Pill */
+    .nav-item-active {
+      background: linear-gradient(90deg, rgba(0, 132, 255, 0.18) 0%, rgba(0, 132, 255, 0.05) 100%);
+      border-left: 3px solid #0084FF;
+      color: #FFFFFF !important;
+    }
+
+    /* Modal Backdrop Blur */
+    .modal-backdrop {
+      background: rgba(4, 8, 18, 0.82);
+      backdrop-filter: blur(8px);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-blue-600 selection:text-white">
+
+  <div class="flex h-screen overflow-hidden">
+    
+    <!-- MOBILE OVERLAY BACKDROP -->
+    <div id="mobile-sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-black/70 z-40 hidden md:hidden transition-opacity"></div>
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-50 w-64 glass-panel border-r border-white/10 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0">
+      
+      <!-- BRAND HEADER -->
+      <div class="p-5 flex items-center justify-between border-b border-white/10">
+        <div class="flex items-center space-x-3">
+          <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/20">
+            <i class="fa-solid me-0.5 fa-graduation-cap"></i>
+          </div>
+          <div>
+            <span class="font-bold text-lg tracking-tight text-white block leading-none">ScholarTrack</span>
+            <span class="text-[10px] uppercase font-semibold tracking-wider text-slate-400 mt-0.5 block">Scholarship Ops</span>
+          </div>
+        </div>
+        <span class="px-2 py-0.5 text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md">ADMIN</span>
+      </div>
+
+      <nav class="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all nav-item-active">
+          <i class="fa-solid fa-chart-pie w-5 text-center text-blue-400"></i>
+          <span>Dashboard</span>
+        </button>
+
+        <button onclick="switchTab('scholarships')" id="nav-scholarships" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+          <i class="fa-solid fa-book-bookmark w-5 text-center"></i>
+          <span class="flex-1 text-left">Scholarships</span>
+          <span id="badge-total-count" class="px-2 py-0.5 text-xs bg-slate-800 text-slate-300 rounded-full font-mono">0</span>
+        </button>
+
+        <button onclick="switchTab('verification')" id="nav-verification" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+          <i class="fa-solid fa-shield-check w-5 text-center text-amber-400"></i>
+          <span class="flex-1 text-left">Verification Queue</span>
+          <span id="badge-pending-count" class="px-2 py-0.5 text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full font-mono font-bold">0</span>
+        </button>
+
+        <button onclick="switchTab('reports')" id="nav-reports" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+          <i class="fa-solid fa-triangle-exclamation w-5 text-center text-rose-400"></i>
+          <span class="flex-1 text-left">Reports</span>
+          <span id="badge-reports-count" class="px-2 py-0.5 text-xs bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-full font-mono font-bold">0</span>
+        </button>
+
+        <button onclick="switchTab('users')" id="nav-users" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+          <i class="fa-solid fa-users w-5 text-center"></i>
+          <span>Users</span>
+        </button>
+
+        <button onclick="switchTab('settings')" id="nav-settings" class="w-full flex items-center space-x-3 px-3.5 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+          <i class="fa-solid fa-gear w-5 text-center"></i>
+          <span>Settings</span>
+        </button>
+      </nav>
+
+      <!-- SIDEBAR FOOTER METRICS -->
+      <div class="p-4 border-t border-white/10 m-3 rounded-xl bg-slate-900/60 text-xs text-slate-400 space-y-2">
+        <div class="flex justify-between items-center text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
+          <span>System Status</span>
+          <span class="inline-flex items-center text-emerald-400"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Operational</span>
+        </div>
+        <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+          <div class="bg-blue-500 h-1.5 rounded-full" style="width: 88%"></div>
+        </div>
+        <p class="text-[10px] text-slate-500 pt-1">ScholarTrack Gemini Engine v2.4 (Mock)</p>
+      </div>
+    </aside>
+
+    <!-- MAIN WORKSPACE CONTENT AREA -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-[#060B17]">
+      
+      <!-- TOP HEADER BAR -->
+      <header class="h-16 glass-panel border-b border-white/10 px-4 md:px-6 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+          <!-- Mobile Menu Toggle Button -->
+          <button onclick="toggleMobileSidebar()" class="md:hidden p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 focus:outline-none">
+            <i class="fa-solid fa-bars text-lg"></i>
+          </button>
+          <h1 id="page-title" class="text-lg md:text-xl font-bold text-white tracking-tight">Dashboard Overview</h1>
+        </div>
+
+        <div class="flex items-center space-x-3 md:space-x-4">
+          <!-- Demo Mode Badge -->
+          <div class="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+            <i class="fa-solid fa-vial-circle-check text-sky-400"></i>
+            <span class="font-mono text-[11px]">Demo Workspace</span>
+          </div>
+
+          <!-- Notification Bell Dropdown -->
+          <div class="relative">
+            <button onclick="toggleNotifications()" class="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 relative transition-colors focus:outline-none">
+              <i class="fa-regular fa-bell text-lg"></i>
+              <span id="unread-dot" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-blue-500 rounded-full ring-2 ring-[#060B17]"></span>
+            </button>
+
+            <!-- Notification Popover -->
+            <div id="notifications-popover" class="hidden absolute right-0 mt-2 w-80 md:w-90 glass-card rounded-xl shadow-2xl border border-white/10 py-2 z-50 animate-fade-in">
+              <div class="px-4 py-2 border-b border-white/10 flex justify-between items-center">
+                <span class="text-xs font-bold text-white uppercase tracking-wider">Notifications</span>
+                <button onclick="markAllNotificationsRead()" class="text-[11px] text-blue-400 hover:underline">Mark all read</button>
+              </div>
+              <div id="notifications-list" class="max-h-72 overflow-y-auto divide-y divide-white/5 text-xs">
+                <!-- Dynamic list populated via JS -->
+              </div>
+            </div>
+          </div>
+
+          <div class="h-6 w-px bg-white/10"></div>
+
+          <!-- Admin Profile Avatar -->
+          <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-full bg-slate-700 border border-blue-500/50 flex items-center justify-center font-bold text-sm text-blue-300 shadow-md">
+              AM
+            </div>
+            <div class="hidden sm:block text-left">
+              <div class="text-xs font-semibold text-white leading-none">Alex Morgan</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">Lead Administrator</div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+        
+        <!-- ========================================================= -->
+        <!-- TAB 1: DASHBOARD HOME -->
+        <!-- ========================================================= -->
+        <section id="tab-dashboard" class="space-y-6 animate-fade-in">
+          
+          <!-- WELCOME BANNER -->
+          <div class="glass-card p-6 rounded-2xl relative overflow-hidden border border-blue-500/20 bg-gradient-to-r from-blue-950/40 via-slate-900/60 to-slate-950/80">
+            <div class="relative z-10">
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Good morning, Admin</h2>
+              <p class="text-slate-400 text-sm mt-1 max-w-2xl">
+                Manage ScholarTrack scholarships, verification queues, user reports, and publish verified funding opportunities for international students.
+              </p>
+            </div>
+            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+          </div>
+
+          <!-- STATS CARDS GRID -->
+          <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+            
+            <div class="glass-card p-4 rounded-xl space-y-2">
+              <div class="text-2xl font-bold font-mono text-white" id="stat-total">128</div>
+              <div class="text-xs text-slate-400 font-medium flex items-center justify-between">
+                <span>Total Scholarships</span>
+                <i class="fa-solid fa-layer-group text-slate-500"></i>
+              </div>
+            </div>
+
+            <div class="glass-card p-4 rounded-xl space-y-2 border-l-4 border-l-emerald-500">
+              <div class="text-2xl font-bold font-mono text-emerald-400" id="stat-published">94</div>
+              <div class="text-xs text-slate-400 font-medium flex items-center justify-between">
+                <span>Published</span>
+                <i class="fa-solid fa-circle-check text-emerald-500/60"></i>
+              </div>
+            </div>
+
+            <div class="glass-card p-4 rounded-xl space-y-2 border-l-4 border-l-amber-500">
+              <div class="text-2xl font-bold font-mono text-amber-400" id="stat-pending">12</div>
+              <div class="text-xs text-slate-400 font-medium flex items-center justify-between">
+                <span>Pending Verification</span>
+                <i class="fa-solid fa-clock-rotate-left text-amber-500/60"></i>
+              </div>
+            </div>
+
+            <div class="glass-card p-4 rounded-xl space-y-2 border-l-4 border-l-slate-600">
+              <div class="text-2xl font-bold font-mono text-slate-300" id="stat-closed">22</div>
+              <div class="text-xs text-slate-400 font-medium flex items-center justify-between">
+                <span>Closed</span>
+                <i class="fa-solid fa-circle-xmark text-slate-500"></i>
+              </div>
+            </div>
+
+            <div class="glass-card p-4 rounded-xl space-y-2 border-l-4 border-l-rose-500 col-span-2 lg:col-span-1">
+              <div class="text-2xl font-bold font-mono text-rose-400" id="stat-reports">5</div>
+              <div class="text-xs text-slate-400 font-medium flex items-center justify-between">
+                <span>Open Reports</span>
+                <i class="fa-solid fa-triangle-exclamation text-rose-500/60"></i>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- NEEDS VERIFICATION QUICK ALERT -->
+          <div class="glass-panel p-5 rounded-xl border-l-4 border-l-amber-500 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-start space-x-3">
+              <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-lg text-lg shrink-0">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-semibold text-white">Attention Needed in Verification Queue</h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  12 scholarships are currently flagged due to stale verification dates (>30 days) or recent reported deadline updates.
+                </p>
+              </div>
+            </div>
+            <button onclick="switchTab('verification')" class="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 text-xs font-semibold rounded-lg transition shrink-0">
+              Go to Queue <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+          </div>
+
+          <!-- RECENT SCHOLARSHIPS TABLE CARD -->
+          <div class="glass-card rounded-2xl overflow-hidden border border-white/10">
+            <div class="p-5 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 class="text-base font-bold text-white">Recent Scholarships</h3>
+                <p class="text-xs text-slate-400">Latest entries and lifecycle status updates</p>
+              </div>
+              <button onclick="switchTab('scholarships')" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center">
+                View All Scholarships <i class="fa-solid fa-chevron-right ml-1.5 text-[10px]"></i>
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/80 uppercase text-[11px] font-semibold text-slate-400 tracking-wider border-b border-white/10">
+                  <tr>
+                    <th class="px-5 py-3">Scholarship</th>
+                    <th class="px-5 py-3">Provider</th>
+                    <th class="px-5 py-3">Country</th>
+                    <th class="px-5 py-3">Degree</th>
+                    <th class="px-5 py-3">Deadline</th>
+                    <th class="px-5 py-3">Status</th>
+                    <th class="px-5 py-3">Last Verified</th>
+                    <th class="px-5 py-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-scholarships-table-body" class="divide-y divide-white/5">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: SCHOLARSHIPS MANAGEMENT -->
+        <!-- ========================================================= -->
+        <section id="tab-scholarships" class="space-y-6 hidden animate-fade-in">
+          
+          <!-- TOP CONTROLS & ADD BUTTON -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-white">Scholarship Directory</h2>
+              <p class="text-xs text-slate-400">Search, filter, edit and control publication states across all scholarships</p>
+            </div>
+            <button onclick="openCreateModal()" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-lg shadow-lg shadow-blue-600/20 flex items-center justify-center space-x-2 transition">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add Scholarship</span>
+            </button>
+          </div>
+
+          <!-- SEARCH AND FILTERS TOOLBAR -->
+          <div class="glass-card p-4 rounded-xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+            <!-- Text Search -->
+            <div class="lg:col-span-2 relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+              <input type="text" id="filter-search" oninput="renderScholarshipsList()" placeholder="Search scholarship name or provider..." class="glass-input w-full pl-9 pr-3 py-2 text-xs rounded-lg">
+            </div>
+
+            <!-- Degree Filter -->
+            <div>
+              <select id="filter-degree" onchange="renderScholarshipsList()" class="glass-input w-full px-3 py-2 text-xs rounded-lg bg-slate-900">
+                <option value="">All Degrees</option>
+                <option value="Master's">Master's</option>
+                <option value="Bachelor">Bachelor</option>
+                <option value="PhD">PhD</option>
+                <option value="Fellowship">Fellowship</option>
+              </select>
+            </div>
+
+            <!-- Country Filter -->
+            <div>
+              <select id="filter-country" onchange="renderScholarshipsList()" class="glass-input w-full px-3 py-2 text-xs rounded-lg bg-slate-900">
+                <option value="">All Countries</option>
+                <option value="European Union">European Union</option>
+                <option value="Hungary">Hungary</option>
+                <option value="Japan">Japan</option>
+                <option value="Germany">Germany</option>
+                <option value="United Kingdom">United Kingdom</option>
+                <option value="United States">United States</option>
+              </select>
+            </div>
+
+            <!-- Funding Filter -->
+            <div>
+              <select id="filter-funding" onchange="renderScholarshipsList()" class="glass-input w-full px-3 py-2 text-xs rounded-lg bg-slate-900">
+                <option value="">All Funding Types</option>
+                <option value="Full Funding">Full Funding</option>
+                <option value="Partial Funding">Partial Funding</option>
+                <option value="Tuition Waiver">Tuition Waiver</option>
+              </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+              <select id="filter-status" onchange="renderScholarshipsList()" class="glass-input w-full px-3 py-2 text-xs rounded-lg bg-slate-900">
+                <option value="">All Lifecycle Statuses</option>
+                <option value="Published">Published</option>
+                <option value="Verified">Verified</option>
+                <option value="Draft">Draft</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- SCHOLARSHIP LIST CONTAINER -->
+          <div class="glass-card rounded-2xl overflow-hidden border border-white/10">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/80 uppercase text-[11px] font-semibold text-slate-400 tracking-wider border-b border-white/10">
+                  <tr>
+                    <th class="px-5 py-3.5">Scholarship</th>
+                    <th class="px-5 py-3.5">Provider / Country</th>
+                    <th class="px-5 py-3.5">Degree</th>
+                    <th class="px-5 py-3.5">Funding</th>
+                    <th class="px-5 py-3.5">Deadline</th>
+                    <th class="px-5 py-3.5">Status</th>
+                    <th class="px-5 py-3.5">Last Verified</th>
+                    <th class="px-5 py-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="scholarships-directory-table-body" class="divide-y divide-white/5">
+                  <!-- Dynamic render -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div id="scholarships-empty-state" class="hidden p-12 text-center space-y-3">
+              <i class="fa-solid fa-folder-open text-4xl text-slate-600"></i>
+              <h4 class="text-sm font-semibold text-white">No scholarships match criteria</h4>
+              <p class="text-xs text-slate-400 max-w-sm mx-auto">Try clearing search keywords or resetting status filters.</p>
+              <button onclick="resetScholarshipFilters()" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 rounded-lg">Reset Filters</button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: VERIFICATION QUEUE -->
+        <!-- ========================================================= -->
+        <section id="tab-verification" class="space-y-6 hidden animate-fade-in">
+          
+          <div class="glass-card p-6 rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-950/20 via-slate-900/60 to-slate-950">
+            <h2 class="text-xl font-bold text-white">Needs Verification Queue</h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Verify accuracy of dates, funding parameters, and official application URLs before publishing to students.
+            </p>
+
+            <!-- Lifecycle Diagram Banner -->
+            <div class="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span class="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">ScholarTrack Lifecycle Flow:</span>
+              <div class="flex items-center space-x-2 text-xs">
+                <span class="px-2.5 py-1 bg-slate-800 text-slate-300 rounded font-mono border border-slate-700">1. Draft</span>
+                <i class="fa-solid fa-arrow-right text-slate-600 text-[10px]"></i>
+                <span class="px-2.5 py-1 bg-amber-500/20 text-amber-300 rounded font-mono border border-amber-500/30">2. Verified</span>
+                <i class="fa-solid fa-arrow-right text-slate-600 text-[10px]"></i>
+                <span class="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 rounded font-mono border border-emerald-500/30">3. Published</span>
+                <i class="fa-solid fa-arrow-right text-slate-600 text-[10px]"></i>
+                <span class="px-2.5 py-1 bg-slate-800 text-slate-400 rounded font-mono border border-slate-700">4. Closed</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- VERIFICATION QUEUE CARDS GRID -->
+          <div id="verification-queue-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Dynamic items rendered via JS -->
+          </div>
+
+          <!-- EMPTY QUEUE STATE -->
+          <div id="verification-empty-state" class="hidden glass-card p-12 text-center rounded-2xl space-y-3">
+            <div class="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto text-xl">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <h4 class="text-base font-semibold text-white">Verification Queue Clear!</h4>
+            <p class="text-xs text-slate-400 max-w-md mx-auto">All scholarships have been audited and verified recently.</p>
+          </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 4: REPORTS MANAGEMENT -->
+        <!-- ========================================================= -->
+        <section id="tab-reports" class="space-y-6 hidden animate-fade-in">
+          
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-white">Student Problem Reports</h2>
+              <p class="text-xs text-slate-400">Review user-submitted corrections regarding broken links, changed deadlines, or inaccurate eligibility</p>
+            </div>
+            
+            <!-- Report Status Filters -->
+            <div class="flex items-center space-x-2 bg-slate-900/80 p-1 rounded-lg border border-white/10">
+              <button onclick="filterReports('ALL')" id="report-filter-all" class="px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white">All</button>
+              <button onclick="filterReports('OPEN')" id="report-filter-open" class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-400 hover:text-white">Open Only</button>
+              <button onclick="filterReports('RESOLVED')" id="report-filter-resolved" class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-400 hover:text-white">Resolved</button>
+            </div>
+          </div>
+
+          <!-- REPORTS TABLE CARD -->
+          <div class="glass-card rounded-2xl overflow-hidden border border-white/10">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/80 uppercase text-[11px] font-semibold text-slate-400 tracking-wider border-b border-white/10">
+                  <tr>
+                    <th class="px-5 py-3.5">Report Reason</th>
+                    <th class="px-5 py-3.5">Scholarship</th>
+                    <th class="px-5 py-3.5">Submitted</th>
+                    <th class="px-5 py-3.5">Report Details</th>
+                    <th class="px-5 py-3.5">Status</th>
+                    <th class="px-5 py-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="reports-table-body" class="divide-y divide-white/5">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 5: USERS MANAGEMENT -->
+        <!-- ========================================================= -->
+        <section id="tab-users" class="space-y-6 hidden animate-fade-in">
+          
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold text-white">Platform Users</h2>
+              <p class="text-xs text-slate-400">Basic account management, status controls, and activity logs</p>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-2xl overflow-hidden border border-white/10">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs text-slate-300">
+                <thead class="bg-slate-900/80 uppercase text-[11px] font-semibold text-slate-400 tracking-wider border-b border-white/10">
+                  <tr>
+                    <th class="px-5 py-3.5">User</th>
+                    <th class="px-5 py-3.5">Email</th>
+                    <th class="px-5 py-3.5">Joined</th>
+                    <th class="px-5 py-3.5">Last Activity</th>
+                    <th class="px-5 py-3.5">Status</th>
+                    <th class="px-5 py-3.5 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="users-table-body" class="divide-y divide-white/5">
+                  <!-- Rendered via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 6: SETTINGS -->
+        <!-- ========================================================= -->
+        <section id="tab-settings" class="space-y-6 hidden animate-fade-in">
+          
+          <div class="max-w-3xl space-y-6">
+            <div>
+              <h2 class="text-xl font-bold text-white">Admin Settings</h2>
+              <p class="text-xs text-slate-400">Manage administrator profile details and notification preferences</p>
+            </div>
+
+            <form onsubmit="saveAdminProfile(event)" class="glass-card p-6 rounded-2xl space-y-5 border border-white/10">
+              <h3 class="text-sm font-bold text-white uppercase tracking-wider border-b border-white/10 pb-2">Profile Information</h3>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1">Full Name</label>
+                  <input type="text" id="setting-name" value="Alex Morgan" class="glass-input w-full px-3 py-2 text-xs rounded-lg">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+                  <input type="email" id="setting-email" value="alex.morgan@scholartrack.org" class="glass-input w-full px-3 py-2 text-xs rounded-lg">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Admin Role</label>
+                <input type="text" value="Lead Administrator (Super Admin)" disabled class="glass-input w-full px-3 py-2 text-xs rounded-lg opacity-60 cursor-not-allowed">
+              </div>
+
+              <div class="pt-4 border-t border-white/10 space-y-4">
+                <h3 class="text-sm font-bold text-white uppercase tracking-wider">System Preferences</h3>
+                
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-semibold text-white">Email Alerts on New Reports</div>
+                    <div class="text-[11px] text-slate-400">Receive instant email when a student flags broken links or deadline changes</div>
+                  </div>
+                  <input type="checkbox" checked class="w-4 h-4 text-blue-600 bg-slate-900 border-slate-700 rounded focus:ring-blue-500">
+                </div>
+
+                <div class="flex items-center justify-between">
+                  <div>
+                    <div class="text-xs font-semibold text-white">Daily Verification Summary</div>
+                    <div class="text-[11px] text-slate-400">Receive a daily summary of scholarships requiring verification</div>
+                  </div>
+                  <input type="checkbox" checked class="w-4 h-4 text-blue-600 bg-slate-900 border-slate-700 rounded focus:ring-blue-500">
+                </div>
+              </div>
+
+              <div class="pt-4 flex justify-end">
+                <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs rounded-lg shadow-lg shadow-blue-600/20 transition">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+
+        </section>
+
+      </main>
+
+      <!-- DISCLAIMER FOOTER -->
+      <footer class="h-10 border-t border-white/5 bg-slate-950/80 px-6 flex items-center justify-between text-[11px] text-slate-500 shrink-0">
+        <div>ScholarTrack Admin Prototype &bull; Demo Local State Only</div>
+        <div>All scholarship deadlines & criteria are sample mock records</div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL 1: CREATE / EDIT SCHOLARSHIP -->
+  <!-- ========================================================= -->
+  <div id="modal-form" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="glass-card w-full max-w-3xl max-h-[90vh] rounded-2xl flex flex-col border border-white/15 shadow-2xl my-auto animate-fade-in">
+      
+      <!-- MODAL HEADER -->
+      <div class="p-5 border-b border-white/10 flex items-center justify-between shrink-0">
+        <h3 id="modal-form-title" class="text-lg font-bold text-white">Create Scholarship</h3>
+        <button onclick="closeModal('modal-form')" class="text-slate-400 hover:text-white p-1 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- FORM BODY -->
+      <form id="scholarship-form" onsubmit="handleFormSubmit(event)" class="p-6 overflow-y-auto space-y-6 text-xs flex-1">
+        <input type="hidden" id="form-id">
+
+        <!-- SECTION 1: BASIC INFORMATION -->
+        <div class="space-y-3">
+          <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider">1. Basic Information</h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Scholarship Name *</label>
+              <input type="text" id="form-name" required placeholder="e.g., Erasmus Mundus Joint Masters" class="glass-input w-full px-3 py-2 rounded-lg">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Provider / Organization *</label>
+              <input type="text" id="form-provider" required placeholder="e.g., European Union Commission" class="glass-input w-full px-3 py-2 rounded-lg">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Country *</label>
+              <input type="text" id="form-country" required placeholder="e.g., European Union / Germany" class="glass-input w-full px-3 py-2 rounded-lg">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Flag Emoji</label>
+              <input type="text" id="form-flag" placeholder="🇪🇺" class="glass-input w-full px-3 py-2 rounded-lg">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Description Overview</label>
+            <textarea id="form-description" rows="3" placeholder="Comprehensive summary of the funding opportunity..." class="glass-input w-full px-3 py-2 rounded-lg"></textarea>
+          </div>
+        </div>
+
+        <!-- SECTION 2: ACADEMIC & ELIGIBILITY -->
+        <div class="space-y-3 pt-3 border-t border-white/10">
+          <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider">2. Academic & Eligibility</h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Degree Level *</label>
+              <select id="form-degree" required class="glass-input w-full px-3 py-2 rounded-lg bg-slate-900">
+                <option value="Master's">Master's Degree</option>
+                <option value="Bachelor">Bachelor Degree</option>
+                <option value="PhD">PhD / Doctorate</option>
+                <option value="Fellowship">Fellowship / Postdoc</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Fields of Study</label>
+              <input type="text" id="form-fields" placeholder="e.g., Engineering, Computer Science, Economics" class="glass-input w-full px-3 py-2 rounded-lg">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-300 mb-1">Eligibility Criteria</label>
+            <textarea id="form-eligibility" rows="2" placeholder="Academic minimums, nationality rules, language requirements..." class="glass-input w-full px-3 py-2 rounded-lg"></textarea>
+          </div>
+        </div>
+
+        <!-- SECTION 3: FUNDING PARAMETERS -->
+        <div class="space-y-3 pt-3 border-t border-white/10">
+          <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider">3. Funding Parameters</h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Funding Type *</label>
+              <select id="form-funding" required class="glass-input w-full px-3 py-2 rounded-lg bg-slate-900">
+                <option value="Full Funding">Full Funding</option>
+                <option value="Partial Funding">Partial Funding</option>
+                <option value="Tuition Waiver">Tuition Waiver Only</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Tuition Info</label>
+              <input type="text" id="form-tuition" placeholder="e.g., 100% Tuition Covered" class="glass-input w-full px-3 py-2 rounded-lg">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Monthly Stipend</label>
+              <input type="text" id="form-stipend" placeholder="e.g., €1,400 / month" class="glass-input w-full px-3 py-2 rounded-lg">
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: DATES & OFFICIAL URLS -->
+        <div class="space-y-3 pt-3 border-t border-white/10">
+          <h4 class="text-xs font-bold text-blue-400 uppercase tracking-wider">4. Application Dates & Official Sources</h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Application Deadline *</label>
+              <input type="text" id="form-deadline" required placeholder="e.g., 15 Jan 2027" class="glass-input w-full px-3 py-2 rounded-lg">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Lifecycle Status *</label>
+              <select id="form-status" required class="glass-input w-full px-3 py-2 rounded-lg bg-slate-900">
+                <option value="Draft">Draft</option>
+                <option value="Verified">Verified</option>
+                <option value="Published">Published</option>
+                <option value="Closed">Closed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Official Source URL *</label>
+              <input type="url" id="form-official-url" required placeholder="https://..." class="glass-input w-full px-3 py-2 rounded-lg font-mono">
+            </div>
+
+            <div>
+              <label class="block font-semibold text-slate-300 mb-1">Direct Application URL</label>
+              <input type="url" id="form-app-url" placeholder="https://..." class="glass-input w-full px-3 py-2 rounded-lg font-mono">
+            </div>
+          </div>
+        </div>
+
+        <!-- MODAL FOOTER BUTTONS -->
+        <div class="pt-4 border-t border-white/10 flex items-center justify-end space-x-3 shrink-0">
+          <button type="button" onclick="closeModal('modal-form')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-lg">
+            Cancel
+          </button>
+          <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg shadow-lg shadow-blue-600/20">
+            Save Scholarship
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL 2: STUDENT-FACING PREVIEW MODAL (GEMINI MVP FOUNDATION) -->
+  <!-- ========================================================= -->
+  <div id="modal-preview" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="glass-card w-full max-w-2xl max-h-[90vh] rounded-2xl flex flex-col border border-white/15 shadow-2xl my-auto animate-fade-in relative overflow-hidden">
+      
+      <!-- ADMIN OVERLAY BAR -->
+      <div class="bg-blue-600 px-4 py-2 text-white flex items-center justify-between text-xs font-semibold shrink-0">
+        <span class="flex items-center"><i class="fa-solid fa-eye mr-2"></i> Student Discovery Preview (Gemini MVP View)</span>
+        <button onclick="closeModal('modal-preview')" class="text-white hover:opacity-80">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- STUDENT VIEW CONTENT -->
+      <div id="preview-modal-content" class="p-6 overflow-y-auto space-y-6 text-slate-300">
+        <!-- Rendered dynamically via JS -->
+      </div>
+
+      <!-- PREVIEW FOOTER -->
+      <div class="p-4 border-t border-white/10 bg-slate-900/60 flex items-center justify-between shrink-0">
+        <span class="text-[11px] text-slate-400">Live preview matches student view</span>
+        <button onclick="closeModal('modal-preview')" class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs text-white rounded-lg">
+          Close Preview
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- MODAL 3: QUICK REVIEW & VERIFY MODAL -->
+  <!-- ========================================================= -->
+  <div id="modal-verify" class="fixed inset-0 z-50 modal-backdrop hidden flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-lg rounded-2xl border border-white/15 shadow-2xl p-6 space-y-5 animate-fade-in">
+      <div class="flex items-center space-x-3">
+        <div class="p-3 bg-amber-500/20 text-amber-400 rounded-xl">
+          <i class="fa-solid fa-shield-check text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">Verify Scholarship Record</h3>
+          <p class="text-xs text-slate-400">Confirm accuracy against official provider source</p>
+        </div>
+      </div>
+
+      <div id="verify-modal-details" class="space-y-3 bg-slate-900/70 p-4 rounded-xl border border-white/5 text-xs">
+        <!-- JS filled -->
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold text-slate-300">Official Source Checklist:</label>
+        <div class="space-y-1.5 text-xs text-slate-300">
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" checked class="w-3.5 h-3.5 text-blue-600 bg-slate-900 border-slate-700 rounded">
+            <span>Deadline date verified against official catalogue</span>
+          </label>
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" checked class="w-3.5 h-3.5 text-blue-600 bg-slate-900 border-slate-700 rounded">
+            <span>Funding stipend & tuition coverage amounts confirmed</span>
+          </label>
+          <label class="flex items-center space-x-2">
+            <input type="checkbox" checked class="w-3.5 h-3.5 text-blue-600 bg-slate-900 border-slate-700 rounded">
+            <span>Application link confirmed active and non-broken</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center justify-end space-x-3">
+        <button onclick="closeModal('modal-verify')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium rounded-lg">
+          Cancel
+        </button>
+        <button onclick="executeVerification()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-xs text-white font-medium rounded-lg shadow-lg shadow-emerald-600/20 flex items-center space-x-2">
+          <i class="fa-solid fa-check"></i>
+          <span>Confirm & Mark Verified</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION STACK -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <script>
+    /* ===================================================================
+       MOCK DATA INITIALIZATION
+       =================================================================== */
+    let scholarships = [
+      {
+        id: "SCH-101",
+        name: "Erasmus Mundus Joint Masters",
+        provider: "European Union Commission",
+        country: "European Union",
+        flag: "🇪🇺",
+        degree: "Master's",
+        fundingType: "Full Funding",
+        tuitionInfo: "100% Tuition Covered",
+        stipendInfo: "€1,400 / month stipend",
+        otherFunding: "Travel allowance + Health Insurance included",
+        deadline: "15 Jan 2027",
+        status: "Published",
+        lastVerified: "2 days ago",
+        needsVerification: false,
+        reasonForReview: "",
+        description: "Prestigious joint master's degree program fully funded by the European Commission across multiple European universities.",
+        fields: "Engineering, Computer Science, Humanities, Environmental Science",
+        eligibility: "Bachelor's degree completed. Open to all international applicants globally.",
+        requirements: [
+          { title: "Academic Transcripts", desc: "Official English translation certified", required: true },
+          { title: "Language Proficiency", desc: "IELTS 6.5+ or TOEFL equivalent", required: true },
+          { title: "Motivation Letter", desc: "Max 1,000 words detailing career trajectory", required: true }
+        ],
+        officialSourceUrl: "https://erasmus-plus.ec.europa.eu",
+        officialAppUrl: "https://erasmus-plus.ec.europa.eu/apply"
+      },
+      {
+        id: "SCH-102",
+        name: "Stipendium Hungaricum Scholarship",
+        provider: "Government of Hungary",
+        country: "Hungary",
+        flag: "🇭🇺",
+        degree: "Master's",
+        fundingType: "Full Funding",
+        tuitionInfo: "Tuition Exemption",
+        stipendInfo: "HUF 43,700 / month stipend",
+        otherFunding: "Free dormitory place or accommodation contribution",
+        deadline: "15 Jan 2027",
+        status: "Published",
+        lastVerified: "5 days ago",
+        needsVerification: false,
+        reasonForReview: "",
+        description: "The Stipendium Hungaricum Scholarship Programme was launched by the Hungarian Government to promote internationalization.",
+        fields: "Medicine, Science, Engineering, Agriculture",
+        eligibility: "Applicants nominated by sending partner authorities.",
+        requirements: [
+          { title: "Medical Certificate", desc: "Standard health check certificate", required: true },
+          { title: "Motivation Letter", desc: "Detailed research/study plan", required: true }
+        ],
+        officialSourceUrl: "https://stipendiumhungaricum.hu",
+        officialAppUrl: "https://apply.stipendiumhungaricum.hu"
+      },
+      {
+        id: "SCH-103",
+        name: "MEXT Japanese Government Scholarship",
+        provider: "Ministry of Education (MEXT) Japan",
+        country: "Japan",
+        flag: "🇯🇵",
+        degree: "Master's",
+        fundingType: "Full Funding",
+        tuitionInfo: "Exemption from entrance & tuition fees",
+        stipendInfo: "¥144,000 / month stipend",
+        otherFunding: "Roundtrip airfare ticket provided",
+        deadline: "30 Apr 2027",
+        status: "Verified",
+        lastVerified: "45 days ago",
+        needsVerification: true,
+        reasonForReview: "45 days since last verification & provider deadline update",
+        description: "Comprehensive scholarship offered by the Ministry of Education, Culture, Sports, Science and Technology in Japan.",
+        fields: "All Academic Disciplines",
+        eligibility: "Under 35 years old. Willingness to learn Japanese.",
+        requirements: [
+          { title: "Recommendation Letter", desc: "From University Dean or Supervisor", required: true },
+          { title: "Research Proposal", desc: "Structured field of study plan", required: true }
+        ],
+        officialSourceUrl: "https://www.mext.go.jp/en/",
+        officialAppUrl: "https://www.studyinjapan.go.jp"
+      },
+      {
+        id: "SCH-104",
+        name: "DAAD Development-Related Postgraduate Courses",
+        provider: "DAAD German Academic Exchange Service",
+        country: "Germany",
+        flag: "🇩🇪",
+        degree: "Master's",
+        fundingType: "Full Funding",
+        tuitionInfo: "Tuition Exempt",
+        stipendInfo: "€934 / month stipend",
+        otherFunding: "Health, accident & personal liability insurance",
+        deadline: "31 Oct 2026",
+        status: "Published",
+        lastVerified: "1 day ago",
+        needsVerification: false,
+        reasonForReview: "",
+        description: "Supports foreign graduates from development countries with at least two years of professional experience.",
+        fields: "Development, Public Policy, Engineering",
+        eligibility: "2+ years relevant professional work experience.",
+        requirements: [
+          { title: "Work Experience Proof", desc: "Official letters from employer", required: true }
+        ],
+        officialSourceUrl: "https://www.daad.de/en/",
+        officialAppUrl: "https://www.daad.de/en/study-and-research-in-germany/scholarships/"
+      },
+      {
+        id: "SCH-105",
+        name: "Commonwealth Master's Scholarships",
+        provider: "Commonwealth Scholarship Commission",
+        country: "United Kingdom",
+        flag: "🇬🇧",
+        degree: "Master's",
+        fundingType: "Full Funding",
+        tuitionInfo: "Approved tuition fees covered",
+        stipendInfo: "£1,347 / month stipend (£1,652 in London)",
+        otherFunding: "Return air travel to UK",
+        deadline: "12 Dec 2026",
+        status: "Draft",
+        lastVerified: "15 days ago",
+        needsVerification: true,
+        reasonForReview: "New submission draft awaiting final approval",
+        description: "Targeted at talented individuals with the potential to make a positive impact on the global stage.",
+        fields: "Science & Tech, Health, Global Prosperity",
+        eligibility: "Citizen or permanent resident of an eligible Commonwealth country.",
+        requirements: [
+          { title: "Proof of Commonwealth Citizenship", desc: "Passport copy", required: true }
+        ],
+        officialSourceUrl: "https://cscuk.fcdo.gov.uk",
+        officialAppUrl: "https://cscuk.fcdo.gov.uk/apply/"
+      },
+      {
+        id: "SCH-106",
+        name: "Gates Cambridge Scholarship",
+        provider: "Gates Cambridge Trust",
+        country: "United Kingdom",
+        flag: "🇬🇧",
+        degree: "PhD",
+        fundingType: "Full Funding",
+        tuitionInfo: "Full composition fee covered",
+        stipendInfo: "£20,000 / year stipend",
+        otherFunding: "Academic development funding + family allowance",
+        deadline: "07 Jan 2027",
+        status: "Published",
+        lastVerified: "3 days ago",
+        needsVerification: false,
+        reasonForReview: "",
+        description: "Full-cost scholarships for outstanding applicants from countries outside the UK to pursue postgraduate degrees at Cambridge.",
+        fields: "All Subjects Available at Cambridge",
+        eligibility: "Outstanding intellectual capacity and leadership potential.",
+        requirements: [
+          { title: "Gates Cambridge Statement", desc: "500-word essay", required: true }
+        ],
+        officialSourceUrl: "https://www.gatescambridge.org",
+        officialAppUrl: "https://www.gatescambridge.org/apply/"
+      },
+      {
+        id: "SCH-107",
+        name: "Stanford Knight-Hennessy Scholars",
+        provider: "Stanford University",
+        country: "United States",
+        flag: "🇺🇸",
+        degree: "Master's",
+        fundingType: "Full Funding",
+        tuitionInfo: "Full tuition and associated fees",
+        stipendInfo: "Living stipend + academic expenses",
+        otherFunding: "Annual travel stipend",
+        deadline: "09 Oct 2026",
+        status: "Closed",
+        lastVerified: "60 days ago",
+        needsVerification: false,
+        reasonForReview: "",
+        description: "Prepares a multidisciplinary, multicultural community of Stanford graduate students to address complex challenges.",
+        fields: "All Stanford Graduate Programs",
+        eligibility: "Applying to any full-time Stanford graduate degree program.",
+        requirements: [
+          { title: "Video Submission", desc: "2-minute introduction video", required: true }
+        ],
+        officialSourceUrl: "https://knight-hennessy.stanford.edu",
+        officialAppUrl: "https://knight-hennessy.stanford.edu/admissions"
+      }
+    ];
+
+    let reports = [
+      {
+        id: "REP-201",
+        scholarshipId: "SCH-103",
+        scholarshipName: "MEXT Japanese Government Scholarship",
+        reason: "Deadline Changed",
+        details: "The Embassy in Kenya updated their application cutoff to April 25 instead of April 30.",
+        reportedAt: "2 hours ago",
+        status: "OPEN"
+      },
+      {
+        id: "REP-202",
+        scholarshipId: "SCH-101",
+        scholarshipName: "Erasmus Mundus Joint Masters",
+        reason: "Broken Link",
+        details: "Catalogue URL gives a 404 error for the Cyber Security track.",
+        reportedAt: "Yesterday",
+        status: "OPEN"
+      },
+      {
+        id: "REP-203",
+        scholarshipId: "SCH-102",
+        scholarshipName: "Stipendium Hungaricum Scholarship",
+        reason: "Incorrect Eligibility",
+        details: "Listed medical check deadline differs from official annexure.",
+        reportedAt: "3 days ago",
+        status: "RESOLVED"
+      }
+    ];
+
+    let users = [
+      {
+        id: "USR-301",
+        name: "Elena Rostova",
+        email: "elena.rostova@gmail.com",
+        avatar: "ER",
+        status: "Active",
+        joined: "12 Aug 2026",
+        lastActivity: "10 mins ago"
+      },
+      {
+        id: "USR-302",
+        name: "Kofi Mensah",
+        email: "kofi.m@university.edu.gh",
+        avatar: "KM",
+        status: "Active",
+        joined: "01 Sep 2026",
+        lastActivity: "1 hour ago"
+      },
+      {
+        id: "USR-303",
+        name: "Taro Tanaka",
+        email: "t.tanaka@tokyo.ac.jp",
+        avatar: "TT",
+        status: "Suspended",
+        joined: "15 Jul 2026",
+        lastActivity: "2 weeks ago"
+      }
+    ];
+
+    let notifications = [
+      { id: 1, text: "MEXT Scholarship reported for deadline change", time: "2 hours ago", read: false },
+      { id: 2, text: "Verification flagged: 45 days since last check", time: "5 hours ago", read: false },
+      { id: 3, text: "DAAD Scholarship published successfully", time: "Yesterday", read: true }
+    ];
+
+    let currentPendingVerifyId = null;
+
+    /* ===================================================================
+       STREAMING_CHUNK:Tab Navigation & UI Lifecycle Functions...
+       =================================================================== */
+    function switchTab(tabName) {
+      // Hide all tabs
+      const tabs = ['dashboard', 'scholarships', 'verification', 'reports', 'users', 'settings'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const nav = document.getElementById(`nav-${t}`);
+        if (el) el.classList.add('hidden');
+        if (nav) nav.classList.remove('nav-item-active');
+      });
+
+      // Show selected
+      const targetTab = document.getElementById(`tab-${tabName}`);
+      const targetNav = document.getElementById(`nav-${tabName}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+      if (targetNav) targetNav.classList.add('nav-item-active');
+
+      // Update Header Title
+      const titles = {
+        'dashboard': 'Dashboard Overview',
+        'scholarships': 'Scholarships Directory',
+        'verification': 'Needs Verification Queue',
+        'reports': 'Problem Reports',
+        'users': 'Platform Users',
+        'settings': 'Admin Settings'
+      };
+      document.getElementById('page-title').innerText = titles[tabName] || 'Admin Workspace';
+
+      // Close mobile sidebar if open
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('mobile-sidebar-backdrop');
+      if (sidebar && !sidebar.classList.contains('-translate-x-full') && window.innerWidth < 768) {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    function toggleMobileSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const backdrop = document.getElementById('mobile-sidebar-backdrop');
+      if (sidebar.classList.contains('-translate-x-full')) {
+        sidebar.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        sidebar.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:Notification & Stat Metrics Functions...
+       =================================================================== */
+    function updateMetrics() {
+      const total = scholarships.length;
+      const published = scholarships.filter(s => s.status === 'Published').length;
+      const pending = scholarships.filter(s => s.needsVerification || s.status === 'Verified' || s.status === 'Draft').length;
+      const closed = scholarships.filter(s => s.status === 'Closed').length;
+      const openReports = reports.filter(r => r.status === 'OPEN').length;
+
+      document.getElementById('stat-total').innerText = total;
+      document.getElementById('stat-published').innerText = published;
+      document.getElementById('stat-pending').innerText = pending;
+      document.getElementById('stat-closed').innerText = closed;
+      document.getElementById('stat-reports').innerText = openReports;
+
+      document.getElementById('badge-total-count').innerText = total;
+      document.getElementById('badge-pending-count').innerText = pending;
+      document.getElementById('badge-reports-count').innerText = openReports;
+    }
+
+    function toggleNotifications() {
+      const popover = document.getElementById('notifications-popover');
+      popover.classList.toggle('hidden');
+      renderNotifications();
+    }
+
+    function renderNotifications() {
+      const list = document.getElementById('notifications-list');
+      if (!list) return;
+
+      const unreadCount = notifications.filter(n => !n.read).length;
+      const dot = document.getElementById('unread-dot');
+      if (dot) {
+        if (unreadCount > 0) dot.classList.remove('hidden');
+        else dot.classList.add('hidden');
+      }
+
+      if (notifications.length === 0) {
+        list.innerHTML = `<div class="p-4 text-center text-slate-500">No notifications</div>`;
+        return;
+      }
+
+      list.innerHTML = notifications.map(n => `
+        <div class="p-3 hover:bg-white/5 flex items-start space-x-2.5 ${!n.read ? 'bg-blue-500/5' : ''}">
+          <i class="fa-solid fa-circle-info text-blue-400 mt-0.5"></i>
+          <div class="flex-1">
+            <p class="text-slate-200 font-medium">${n.text}</p>
+            <span class="text-[10px] text-slate-500">${n.time}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function markAllNotificationsRead() {
+      notifications.forEach(n => n.read = true);
+      renderNotifications();
+      showToast('All notifications marked as read', 'info');
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:Rendering Dashboard & Scholarship Tables...
+       =================================================================== */
+    function getStatusBadgeClass(status) {
+      switch (status) {
+        case 'Published':
+          return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+        case 'Verified':
+          return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+        case 'Draft':
+          return 'bg-slate-800 text-slate-300 border-slate-700';
+        case 'Closed':
+          return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+        default:
+          return 'bg-slate-800 text-slate-300 border-slate-700';
+      }
+    }
+
+    function renderRecentScholarships() {
+      const tbody = document.getElementById('recent-scholarships-table-body');
+      if (!tbody) return;
+
+      tbody.innerHTML = scholarships.slice(0, 5).map(s => `
+        <tr class="hover:bg-white/5 transition-colors">
+          <td class="px-5 py-3.5 font-semibold text-white">
+            <div class="flex items-center space-x-2">
+              <span>${s.flag}</span>
+              <span class="truncate max-w-xs">${s.name}</span>
+            </div>
+          </td>
+          <td class="px-5 py-3.5 text-slate-400">${s.provider}</td>
+          <td class="px-5 py-3.5 text-slate-300">${s.country}</td>
+          <td class="px-5 py-3.5 text-slate-300">${s.degree}</td>
+          <td class="px-5 py-3.5 font-mono text-slate-300">${s.deadline}</td>
+          <td class="px-5 py-3.5">
+            <span class="px-2 py-0.5 text-[11px] font-semibold border rounded-md ${getStatusBadgeClass(s.status)}">
+              ${s.status}
+            </span>
+          </td>
+          <td class="px-5 py-3.5 text-slate-400 text-[11px]">${s.lastVerified}</td>
+          <td class="px-5 py-3.5 text-right space-x-2">
+            <button onclick="openStudentPreview('${s.id}')" title="Student Preview" class="p-1.5 text-slate-400 hover:text-blue-400 rounded">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+            <button onclick="openEditModal('${s.id}')" title="Edit" class="p-1.5 text-slate-400 hover:text-white rounded">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:Scholarships Directory Search & Filters...
+       =================================================================== */
+    function renderScholarshipsList() {
+      const tbody = document.getElementById('scholarships-directory-table-body');
+      const empty = document.getElementById('scholarships-empty-state');
+      if (!tbody) return;
+
+      const search = document.getElementById('filter-search').value.toLowerCase();
+      const degree = document.getElementById('filter-degree').value;
+      const country = document.getElementById('filter-country').value;
+      const funding = document.getElementById('filter-funding').value;
+      const status = document.getElementById('filter-status').value;
+
+      const filtered = scholarships.filter(s => {
+        const matchesSearch = s.name.toLowerCase().includes(search) || s.provider.toLowerCase().includes(search);
+        const matchesDegree = !degree || s.degree === degree;
+        const matchesCountry = !country || s.country === country;
+        const matchesFunding = !funding || s.fundingType === funding;
+        const matchesStatus = !status || s.status === status;
+        return matchesSearch && matchesDegree && matchesCountry && matchesFunding && matchesStatus;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      tbody.innerHTML = filtered.map(s => `
+        <tr class="hover:bg-white/5 transition-colors">
+          <td class="px-5 py-3.5 font-semibold text-white">
+            <div class="flex items-center space-x-2">
+              <span class="text-base">${s.flag}</span>
+              <div>
+                <div class="font-bold text-white truncate max-w-xs">${s.name}</div>
+                <div class="text-[10px] text-slate-500 font-mono">${s.id}</div>
+              </div>
+            </div>
+          </td>
+          <td class="px-5 py-3.5">
+            <div class="text-slate-200">${s.provider}</div>
+            <div class="text-[11px] text-slate-400">${s.country}</div>
+          </td>
+          <td class="px-5 py-3.5 text-slate-300 font-medium">${s.degree}</td>
+          <td class="px-5 py-3.5">
+            <span class="px-2 py-0.5 text-[10px] rounded bg-blue-500/10 text-blue-300 border border-blue-500/20 font-mono">
+              ${s.fundingType}
+            </span>
+          </td>
+          <td class="px-5 py-3.5 font-mono text-slate-300">${s.deadline}</td>
+          <td class="px-5 py-3.5">
+            <span class="px-2 py-0.5 text-[11px] font-semibold border rounded-md ${getStatusBadgeClass(s.status)}">
+              ${s.status}
+            </span>
+          </td>
+          <td class="px-5 py-3.5 text-slate-400 text-[11px]">${s.lastVerified}</td>
+          <td class="px-5 py-3.5 text-right space-x-1">
+            <button onclick="openStudentPreview('${s.id}')" title="Student Preview" class="px-2 py-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700">
+              <i class="fa-solid fa-eye mr-1"></i> Preview
+            </button>
+            <button onclick="openEditModal('${s.id}')" title="Edit" class="p-1.5 text-slate-400 hover:text-white rounded">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button onclick="quickToggleStatus('${s.id}')" title="Advance Status" class="p-1.5 text-slate-400 hover:text-emerald-400 rounded">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function resetScholarshipFilters() {
+      document.getElementById('filter-search').value = '';
+      document.getElementById('filter-degree').value = '';
+      document.getElementById('filter-country').value = '';
+      document.getElementById('filter-funding').value = '';
+      document.getElementById('filter-status').value = '';
+      renderScholarshipsList();
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:Verification Queue & Action Handlers...
+       =================================================================== */
+    function renderVerificationQueue() {
+      const grid = document.getElementById('verification-queue-grid');
+      const empty = document.getElementById('verification-empty-state');
+      if (!grid) return;
+
+      const queue = scholarships.filter(s => s.needsVerification || s.status === 'Draft' || s.status === 'Verified');
+
+      if (queue.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      grid.innerHTML = queue.map(s => `
+        <div class="glass-card p-5 rounded-xl border border-white/10 flex flex-col justify-between space-y-4">
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 text-[10px] font-semibold border rounded ${getStatusBadgeClass(s.status)}">
+                ${s.status}
+              </span>
+              <span class="text-[11px] font-mono text-slate-400"><i class="fa-regular fa-clock mr-1"></i> ${s.lastVerified}</span>
+            </div>
+
+            <div>
+              <h4 class="font-bold text-white text-sm leading-snug">${s.flag} ${s.name}</h4>
+              <p class="text-xs text-slate-400 mt-0.5">${s.provider} &bull; ${s.country}</p>
+            </div>
+
+            <div class="bg-amber-500/10 border border-amber-500/20 p-2.5 rounded-lg text-xs text-amber-300 space-y-1">
+              <div class="font-semibold text-[11px] uppercase tracking-wider text-amber-400 flex items-center">
+                <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Reason for Review:
+              </div>
+              <p class="text-[11px] text-amber-200/90">${s.reasonForReview || 'Regular periodic audit required.'}</p>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-white/10 flex items-center justify-between">
+            <a href="${s.officialSourceUrl}" target="_blank" class="text-xs text-blue-400 hover:underline flex items-center">
+              Official Source <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>
+            </a>
+            <button onclick="openVerifyModal('${s.id}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow transition">
+              Review & Verify
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openVerifyModal(id) {
+      currentPendingVerifyId = id;
+      const s = scholarships.find(item => item.id === id);
+      if (!s) return;
+
+      const detailsContainer = document.getElementById('verify-modal-details');
+      detailsContainer.innerHTML = `
+        <div class="font-bold text-white text-sm">${s.flag} ${s.name}</div>
+        <div class="text-slate-400">Provider: ${s.provider}</div>
+        <div class="text-slate-400">Deadline: ${s.deadline}</div>
+        <div class="text-slate-400">Official URL: <a href="${s.officialSourceUrl}" target="_blank" class="text-blue-400 underline font-mono">${s.officialSourceUrl}</a></div>
+      `;
+
+      openModal('modal-verify');
+    }
+
+    function executeVerification() {
+      if (!currentPendingVerifyId) return;
+      const s = scholarships.find(item => item.id === currentPendingVerifyId);
+      if (s) {
+        s.status = 'Verified';
+        s.needsVerification = false;
+        s.reasonForReview = '';
+        s.lastVerified = 'Just now';
+        
+        updateMetrics();
+        renderRecentScholarships();
+        renderScholarshipsList();
+        renderVerificationQueue();
+        closeModal('modal-verify');
+        showToast(`${s.name} verified successfully!`, 'success');
+      }
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:Create & Edit Modal Logic...
+       =================================================================== */
+    function openCreateModal() {
+      document.getElementById('modal-form-title').innerText = 'Create New Scholarship';
+      document.getElementById('scholarship-form').reset();
+      document.getElementById('form-id').value = '';
+      openModal('modal-form');
+    }
+
+    function openEditModal(id) {
+      const s = scholarships.find(item => item.id === id);
+      if (!s) return;
+
+      document.getElementById('modal-form-title').innerText = `Edit: ${s.name}`;
+      document.getElementById('form-id').value = s.id;
+      document.getElementById('form-name').value = s.name;
+      document.getElementById('form-provider').value = s.provider;
+      document.getElementById('form-country').value = s.country;
+      document.getElementById('form-flag').value = s.flag;
+      document.getElementById('form-description').value = s.description || '';
+      document.getElementById('form-degree').value = s.degree;
+      document.getElementById('form-fields').value = s.fields || '';
+      document.getElementById('form-eligibility').value = s.eligibility || '';
+      document.getElementById('form-funding').value = s.fundingType;
+      document.getElementById('form-tuition').value = s.tuitionInfo || '';
+      document.getElementById('form-stipend').value = s.stipendInfo || '';
+      document.getElementById('form-deadline').value = s.deadline;
+      document.getElementById('form-status').value = s.status;
+      document.getElementById('form-official-url').value = s.officialSourceUrl;
+      document.getElementById('form-app-url').value = s.officialAppUrl || '';
+
+      openModal('modal-form');
+    }
+
+    function handleFormSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('form-id').value;
+      const isEdit = !!id;
+
+      const record = {
+        id: isEdit ? id : `SCH-${Math.floor(100 + Math.random() * 900)}`,
+        name: document.getElementById('form-name').value,
+        provider: document.getElementById('form-provider').value,
+        country: document.getElementById('form-country').value,
+        flag: document.getElementById('form-flag').value || '🌐',
+        degree: document.getElementById('form-degree').value,
+        fundingType: document.getElementById('form-funding').value,
+        tuitionInfo: document.getElementById('form-tuition').value || 'Fully Covered',
+        stipendInfo: document.getElementById('form-stipend').value || 'Monthly Stipend Provided',
+        deadline: document.getElementById('form-deadline').value,
+        status: document.getElementById('form-status').value,
+        lastVerified: 'Just now',
+        needsVerification: false,
+        reasonForReview: '',
+        description: document.getElementById('form-description').value,
+        fields: document.getElementById('form-fields').value,
+        eligibility: document.getElementById('form-eligibility').value,
+        officialSourceUrl: document.getElementById('form-official-url').value,
+        officialAppUrl: document.getElementById('form-app-url').value,
+        requirements: [
+          { title: "Academic Record", desc: "Certified Transcripts", required: true },
+          { title: "Official Application", desc: "Submitted through portal", required: true }
+        ]
+      };
+
+      if (isEdit) {
+        const index = scholarships.findIndex(s => s.id === id);
+        if (index !== -1) scholarships[index] = record;
+        showToast('Scholarship updated successfully', 'success');
+      } else {
+        scholarships.unshift(record);
+        showToast('New scholarship created successfully', 'success');
+      }
+
+      closeModal('modal-form');
+      updateMetrics();
+      renderRecentScholarships();
+      renderScholarshipsList();
+      renderVerificationQueue();
+    }
+
+    function quickToggleStatus(id) {
+      const s = scholarships.find(item => item.id === id);
+      if (!s) return;
+
+      const cycle = {
+        'Draft': 'Verified',
+        'Verified': 'Published',
+        'Published': 'Closed',
+        'Closed': 'Draft'
+      };
+
+      s.status = cycle[s.status] || 'Published';
+      showToast(`${s.name} status changed to ${s.status}`, 'info');
+      updateMetrics();
+      renderRecentScholarships();
+      renderScholarshipsList();
+      renderVerificationQueue();
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:Student Preview Modal Rendering...
+       =================================================================== */
+    function openStudentPreview(id) {
+      const s = scholarships.find(item => item.id === id);
+      if (!s) return;
+
+      const container = document.getElementById('preview-modal-content');
+      container.innerHTML = `
+        <div class="space-y-4">
+          <!-- Header callout -->
+          <div class="flex items-start justify-between border-b border-white/10 pb-4">
+            <div>
+              <div class="text-xs font-semibold text-blue-400 uppercase tracking-wider">${s.provider}</div>
+              <h2 class="text-xl font-extrabold text-white mt-1">${s.flag} ${s.name}</h2>
+              <div class="flex items-center space-x-2 mt-2 text-xs">
+                <span class="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-medium">${s.degree}</span>
+                <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-medium">${s.fundingType}</span>
+                <span class="text-slate-400">&bull; ${s.country}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-[10px] text-slate-400 uppercase font-semibold">Deadline</div>
+              <div class="text-sm font-bold text-amber-400 font-mono">${s.deadline}</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="text-xs text-slate-300 leading-relaxed">
+            ${s.description || 'No detailed description available.'}
+          </div>
+
+          <!-- Funding Grid -->
+          <div class="grid grid-cols-2 gap-3 p-3 bg-slate-900/80 rounded-xl border border-white/5 text-xs">
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-semibold">Tuition Coverage</span>
+              <span class="text-white font-medium">${s.tuitionInfo}</span>
+            </div>
+            <div>
+              <span class="text-slate-400 block text-[10px] uppercase font-semibold">Monthly Stipend</span>
+              <span class="text-white font-medium">${s.stipendInfo}</span>
+            </div>
+          </div>
+
+          <!-- Eligibility & Fields -->
+          <div class="space-y-2 text-xs">
+            <h4 class="font-bold text-white uppercase text-[11px] tracking-wider text-slate-300">Eligibility & Fields</h4>
+            <p class="text-slate-300 bg-slate-900/50 p-3 rounded-lg border border-white/5">${s.eligibility || 'Open to eligible international scholars.'}</p>
+          </div>
+
+          <!-- Requirements Checklist -->
+          <div class="space-y-2 text-xs">
+            <h4 class="font-bold text-white uppercase text-[11px] tracking-wider text-slate-300">Required Documents</h4>
+            <div class="space-y-1.5">
+              ${(s.requirements || []).map(r => `
+                <div class="flex items-start space-x-2 p-2 bg-slate-900/40 rounded border border-white/5">
+                  <i class="fa-solid fa-square-check text-blue-400 mt-0.5"></i>
+                  <div>
+                    <div class="font-semibold text-white">${r.title} ${r.required ? '<span class="text-rose-400 text-[10px]">(Required)</span>' : ''}</div>
+                    <div class="text-[11px] text-slate-400">${r.desc}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Verified Citation Badge -->
+          <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs text-emerald-300">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-shield-check text-base"></i>
+              <span>Official Source Verified (${s.lastVerified})</span>
+            </div>
+            <a href="${s.officialSourceUrl}" target="_blank" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded text-[11px]">
+              Apply on Official Site <i class="fa-solid fa-arrow-up-right-from-square ml-1 text-[10px]"></i>
+            </a>
+          </div>
+        </div>
+      `;
+
+      openModal('modal-preview');
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:Reports & User Table Functions...
+       =================================================================== */
+    function renderReportsTable(filter = 'ALL') {
+      const tbody = document.getElementById('reports-table-body');
+      if (!tbody) return;
+
+      const filtered = reports.filter(r => filter === 'ALL' || r.status === filter);
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr class="hover:bg-white/5 transition-colors">
+          <td class="px-5 py-3.5 font-semibold text-rose-400">
+            <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> ${r.reason}
+          </td>
+          <td class="px-5 py-3.5 text-white font-medium">${r.scholarshipName}</td>
+          <td class="px-5 py-3.5 text-slate-400 text-[11px]">${r.reportedAt}</td>
+          <td class="px-5 py-3.5 text-slate-300 max-w-xs truncate">${r.details}</td>
+          <td class="px-5 py-3.5">
+            <span class="px-2 py-0.5 text-[10px] font-semibold rounded border ${r.status === 'OPEN' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}">
+              ${r.status}
+            </span>
+          </td>
+          <td class="px-5 py-3.5 text-right">
+            ${r.status === 'OPEN' ? `
+              <button onclick="resolveReport('${r.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[11px] font-semibold">
+                Mark Resolved
+              </button>
+            ` : '<span class="text-slate-500 text-[11px]">Resolved</span>'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterReports(mode) {
+      document.getElementById('report-filter-all').className = mode === 'ALL' ? 'px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white' : 'px-3 py-1.5 text-xs font-medium rounded-md text-slate-400 hover:text-white';
+      document.getElementById('report-filter-open').className = mode === 'OPEN' ? 'px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white' : 'px-3 py-1.5 text-xs font-medium rounded-md text-slate-400 hover:text-white';
+      document.getElementById('report-filter-resolved').className = mode === 'RESOLVED' ? 'px-3 py-1.5 text-xs font-medium rounded-md bg-blue-600 text-white' : 'px-3 py-1.5 text-xs font-medium rounded-md text-slate-400 hover:text-white';
+      
+      renderReportsTable(mode);
+    }
+
+    function resolveReport(id) {
+      const rep = reports.find(r => r.id === id);
+      if (rep) {
+        rep.status = 'RESOLVED';
+        showToast('Report marked as resolved', 'success');
+        updateMetrics();
+        renderReportsTable('ALL');
+      }
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('users-table-body');
+      if (!tbody) return;
+
+      tbody.innerHTML = users.map(u => `
+        <tr class="hover:bg-white/5 transition-colors">
+          <td class="px-5 py-3.5 font-semibold text-white">
+            <div class="flex items-center space-x-3">
+              <div class="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-blue-400">
+                ${u.avatar}
+              </div>
+              <span class="text-xs font-bold text-white">${u.name}</span>
+            </div>
+          </td>
+          <td class="px-5 py-3.5 text-slate-400 font-mono">${u.email}</td>
+          <td class="px-5 py-3.5 text-slate-300 text-[11px]">${u.joined}</td>
+          <td class="px-5 py-3.5 text-slate-400 text-[11px]">${u.lastActivity}</td>
+          <td class="px-5 py-3.5">
+            <span class="px-2 py-0.5 text-[10px] font-semibold rounded border ${u.status === 'Active' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}">
+              ${u.status}
+            </span>
+          </td>
+          <td class="px-5 py-3.5 text-right">
+            <button onclick="toggleUserStatus('${u.id}')" class="px-2.5 py-1 text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700">
+              ${u.status === 'Active' ? 'Suspend' : 'Reactivate'}
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function toggleUserStatus(id) {
+      const u = users.find(user => user.id === id);
+      if (u) {
+        u.status = u.status === 'Active' ? 'Suspended' : 'Active';
+        showToast(`Account for ${u.name} set to ${u.status}`, 'info');
+        renderUsersTable();
+      }
+    }
+
+    function saveAdminProfile(e) {
+      e.preventDefault();
+      showToast('Admin settings saved successfully', 'success');
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:Modal Helpers & Toast Notification System...
+       =================================================================== */
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      
+      const colors = {
+        'success': 'border-emerald-500/30 bg-emerald-950/90 text-emerald-300',
+        'info': 'border-blue-500/30 bg-blue-950/90 text-blue-300',
+        'warning': 'border-amber-500/30 bg-amber-950/90 text-amber-300',
+        'error': 'border-rose-500/30 bg-rose-950/90 text-rose-300'
+      };
+
+      const icons = {
+        'success': 'fa-circle-check',
+        'info': 'fa-circle-info',
+        'warning': 'fa-triangle-exclamation',
+        'error': 'fa-circle-xmark'
+      };
+
+      toast.className = `glass-card pointer-events-auto flex items-center space-x-3 px-4 py-3 rounded-xl border text-xs shadow-2xl animate-fade-in ${colors[type] || colors['info']}`;
+      toast.innerHTML = `
+        <i class="fa-solid ${icons[type] || icons['info']} text-sm"></i>
+        <span class="font-medium">${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    /* ===================================================================
+       STREAMING_CHUNK:App Initialization on Window Load...
+       =================================================================== */
+    window.onload = function() {
+      updateMetrics();
+      renderRecentScholarships();
+      renderScholarshipsList();
+      renderVerificationQueue();
+      renderReportsTable('ALL');
+      renderUsersTable();
+      renderNotifications();
+    };
+  </script>
+</body>
+</html>
