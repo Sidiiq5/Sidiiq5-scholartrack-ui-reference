@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScholarTrack — Authentication</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            navy: {
+              950: '#0B0F19',
+              900: '#0D111D',
+              800: '#111827',
+              700: '#1F2937',
+            },
+            brand: {
+              500: '#3B82F6',
+              600: '#2563EB',
+              700: '#1D4ED8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #0B0F19;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
+        radial-gradient(circle at 85% 90%, rgba(29, 78, 216, 0.08) 0%, transparent 50%);
+      font-family: 'Inter', sans-serif;
+      color: #F9FAFB;
+    }
+    .glass-panel {
+      background: rgba(17, 24, 39, 0.70);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .input-field {
+      background: rgba(13, 17, 29, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      transition: all 0.2s ease-in-out;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #3B82F6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+      background: rgba(13, 17, 29, 0.85);
+    }
+    .input-field.error {
+      border-color: #EF4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+    }
+    .btn-primary {
+      background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+      transition: all 0.2s ease-in-out;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(180deg, #3B82F6 0%, #2563EB 100%);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .toast {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    }
+  </style>
+</head>
+<div class="min-h-screen flex flex-col justify-between p-4 sm:p-6 lg:p-8 relative overflow-hidden">
+
+  <!-- TOP HEADER / DEMO CONTROLS -->
+  <header class="w-full max-w-5xl mx-auto flex justify-between items-center z-10">
+    <div class="flex items-center gap-2.5">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center shadow-lg shadow-blue-500/20 border border-blue-400/30">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+        </svg>
+      </div>
+      <span class="text-lg font-bold tracking-tight text-white">Scholar<span class="text-blue-400">Track</span></span>
+    </div>
+
+    <!-- Interactive Prototype Demo Quick-Fill Bar -->
+    <div class="hidden sm:flex items-center gap-2 bg-navy-800/80 backdrop-blur border border-white/10 px-3 py-1.5 rounded-full text-xs text-gray-300">
+      <span class="text-gray-400 font-medium mr-1">Demo Quick-Fill:</span>
+      <button onclick="quickFill('student')" class="hover:text-blue-400 transition-colors font-medium underline decoration-blue-500/40">Student Account</button>
+      <span class="text-gray-600">•</span>
+      <button onclick="quickFill('admin')" class="hover:text-blue-400 transition-colors font-medium underline decoration-blue-500/40">Admin Account</button>
+      <span class="text-gray-600">•</span>
+      <button onclick="simulateServerError()" class="hover:text-red-400 transition-colors font-medium">Test Server Error</button>
+    </div>
+  </header>
+
+  <!-- MAIN CENTRAL WORKSPACE -->
+  <main class="flex-1 flex items-center justify-center py-8 z-10">
+    <div class="w-full max-w-md">
+
+      <!-- GLASS CONTAINER -->
+      <div class="glass-panel rounded-2xl p-6 sm:p-8 relative">
+
+        <!-- VIEW 1: UNIFIED LOGIN -->
+        <div id="view-login" class="space-y-6">
+          <div class="space-y-1.5 text-center">
+            <h1 class="text-2xl font-bold tracking-tight text-white">Welcome back</h1>
+            <p class="text-sm text-gray-400">Sign in to manage your scholarship discovery and preparation</p>
+          </div>
+
+          <!-- Alert Banner for Feedback -->
+          <div id="login-alert" class="hidden p-3.5 rounded-xl text-sm border flex items-start gap-2.5 transition-all">
+            <svg id="login-alert-icon" class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+            <span id="login-alert-msg" class="leading-snug"></span>
+          </div>
+
+          <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4" novalidate>
+            <!-- Email Input -->
+            <div class="space-y-1.5">
+              <label for="login-email" class="block text-xs font-semibold uppercase tracking-wider text-gray-300">Email Address</label>
+              <input 
+                type="email" 
+                id="login-email" 
+                class="input-field w-full px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-500" 
+                placeholder="name@example.com"
+                autocomplete="email"
+                required
+              >
+              <p id="login-email-err" class="hidden text-xs text-red-400 mt-1"></p>
+            </div>
+
+            <!-- Password Input -->
+            <div class="space-y-1.5">
+              <div class="flex justify-between items-center">
+                <label for="login-password" class="block text-xs font-semibold uppercase tracking-wider text-gray-300">Password</label>
+              </div>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="login-password" 
+                  class="input-field w-full px-3.5 py-2.5 pr-10 rounded-xl text-sm text-white placeholder-gray-500" 
+                  placeholder="••••••••"
+                  autocomplete="current-password"
+                  required
+                >
+                <button 
+                  type="button" 
+                  onclick="togglePassword('login-password', 'eye-icon-login')" 
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                  aria-label="Toggle password visibility"
+                >
+                  <svg id="eye-icon-login" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
+              <p id="login-password-err" class="hidden text-xs text-red-400 mt-1"></p>
+            </div>
+
+            <!-- Submit Button -->
+            <button 
+              type="submit" 
+              id="btn-login-submit" 
+              class="btn-primary w-full py-2.5 px-4 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 mt-2"
+            >
+              <span id="login-btn-text">Log In</span>
+              <svg id="login-spinner" class="hidden animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+          </form>
+
+          <!-- Footer Switch to Registration -->
+          <div class="pt-4 border-t border-white/5 text-center">
+            <p class="text-xs text-gray-400">
+              Don't have an account? 
+              <button onclick="switchView('register')" class="text-blue-400 hover:text-blue-300 font-semibold ml-1 focus:outline-none underline decoration-blue-500/30">
+                Create an account
+              </button>
+            </p>
+          </div>
+        </div>
+
+
+        <!-- VIEW 2: STUDENT REGISTRATION -->
+        <div id="view-register" class="space-y-6 hidden">
+          <div class="space-y-1.5 text-center">
+            <h1 class="text-2xl font-bold tracking-tight text-white">Create Account</h1>
+            <p class="text-sm text-gray-400">Start discovering and preparing for scholarships</p>
+          </div>
+
+          <!-- Alert Banner for Registration -->
+          <div id="register-alert" class="hidden p-3.5 rounded-xl text-sm border flex items-start gap-2.5 transition-all">
+            <svg id="register-alert-icon" class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+            <span id="register-alert-msg" class="leading-snug"></span>
+          </div>
+
+          <form id="form-register" onsubmit="handleRegister(event)" class="space-y-3.5" novalidate>
+            <!-- Full Name -->
+            <div class="space-y-1">
+              <label for="reg-name" class="block text-xs font-semibold uppercase tracking-wider text-gray-300">Full Name</label>
+              <input 
+                type="text" 
+                id="reg-name" 
+                class="input-field w-full px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-500" 
+                placeholder="Alex Morgan"
+                required
+              >
+              <p id="reg-name-err" class="hidden text-xs text-red-400 mt-1"></p>
+            </div>
+
+            <!-- Email Address -->
+            <div class="space-y-1">
+              <label for="reg-email" class="block text-xs font-semibold uppercase tracking-wider text-gray-300">Email Address</label>
+              <input 
+                type="email" 
+                id="reg-email" 
+                class="input-field w-full px-3.5 py-2.5 rounded-xl text-sm text-white placeholder-gray-500" 
+                placeholder="alex@example.com"
+                required
+              >
+              <p id="reg-email-err" class="hidden text-xs text-red-400 mt-1"></p>
+            </div>
+
+            <!-- Password -->
+            <div class="space-y-1">
+              <label for="reg-password" class="block text-xs font-semibold uppercase tracking-wider text-gray-300">Password</label>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="reg-password" 
+                  class="input-field w-full px-3.5 py-2.5 pr-10 rounded-xl text-sm text-white placeholder-gray-500" 
+                  placeholder="At least 8 characters"
+                  required
+                >
+                <button 
+                  type="button" 
+                  onclick="togglePassword('reg-password', 'eye-icon-reg1')" 
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                  aria-label="Toggle password visibility"
+                >
+                  <svg id="eye-icon-reg1" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
+              <p id="reg-password-err" class="hidden text-xs text-red-400 mt-1"></p>
+            </div>
+
+            <!-- Password Confirmation -->
+            <div class="space-y-1">
+              <label for="reg-confirm" class="block text-xs font-semibold uppercase tracking-wider text-gray-300">Confirm Password</label>
+              <div class="relative">
+                <input 
+                  type="password" 
+                  id="reg-confirm" 
+                  class="input-field w-full px-3.5 py-2.5 pr-10 rounded-xl text-sm text-white placeholder-gray-500" 
+                  placeholder="Re-enter password"
+                  required
+                >
+                <button 
+                  type="button" 
+                  onclick="togglePassword('reg-confirm', 'eye-icon-reg2')" 
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-200 focus:outline-none"
+                  aria-label="Toggle password visibility"
+                >
+                  <svg id="eye-icon-reg2" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </button>
+              </div>
+              <p id="reg-confirm-err" class="hidden text-xs text-red-400 mt-1"></p>
+            </div>
+
+            <!-- Submit Button -->
+            <button 
+              type="submit" 
+              id="btn-register-submit" 
+              class="btn-primary w-full py-2.5 px-4 rounded-xl font-semibold text-sm text-white flex items-center justify-center gap-2 mt-4"
+            >
+              <span id="register-btn-text">Create Account</span>
+              <svg id="register-spinner" class="hidden animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </button>
+          </form>
+
+          <!-- Footer Switch to Login -->
+          <div class="pt-4 border-t border-white/5 text-center">
+            <p class="text-xs text-gray-400">
+              Already have an account? 
+              <button onclick="switchView('login')" class="text-blue-400 hover:text-blue-300 font-semibold ml-1 focus:outline-none underline decoration-blue-500/30">
+                Log In
+              </button>
+            </p>
+          </div>
+        </div>
+
+
+        <!-- VIEW 3: POST-AUTHENTICATION ROLE ROUTING PLACEHOLDER -->
+        <div id="view-authenticated" class="space-y-6 hidden text-center py-4">
+          <div class="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mx-auto text-blue-400">
+            <svg id="auth-role-icon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+          </div>
+
+          <div class="space-y-2">
+            <span id="auth-role-badge" class="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider"></span>
+            <h2 class="text-2xl font-bold text-white" id="auth-welcome-heading">Welcome!</h2>
+            <p class="text-sm text-gray-400 max-w-xs mx-auto" id="auth-redirect-subtext"></p>
+          </div>
+
+          <div class="p-4 rounded-xl bg-navy-900/80 border border-white/10 text-left space-y-2">
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-400">Auth Token:</span>
+              <span class="text-emerald-400 font-mono">Issued (Django Session)</span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-400">Evaluated Role:</span>
+              <span class="text-white font-semibold" id="auth-role-evaluated"></span>
+            </div>
+            <div class="flex justify-between text-xs">
+              <span class="text-gray-400">Authorized Target:</span>
+              <span class="text-blue-400 font-mono" id="auth-target-url"></span>
+            </div>
+          </div>
+
+          <button onclick="logout()" class="w-full py-2.5 px-4 rounded-xl bg-gray-800 hover:bg-gray-700 text-gray-300 font-medium text-sm transition-colors border border-white/10">
+            Sign Out & Return to Login
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="w-full max-w-5xl mx-auto text-center text-xs text-gray-500 py-2 z-10 flex flex-col sm:flex-row justify-between items-center gap-2">
+    <div>ScholarTrack Platform © 2026. All rights reserved.</div>
+    <div class="flex gap-4 text-gray-400">
+      <span class="hover:text-gray-300 cursor-pointer">Privacy Policy</span>
+      <span>•</span>
+      <span class="hover:text-gray-300 cursor-pointer">Terms of Service</span>
+      <span>•</span>
+      <span class="hover:text-gray-300 cursor-pointer">Support</span>
+    </div>
+  </footer>
+
+  <!-- FLOATING TOAST NOTIFICATION SYSTEM -->
+  <div id="toast" class="toast fixed bottom-6 right-6 max-w-sm w-full bg-navy-800/95 border border-white/10 shadow-2xl rounded-xl p-4 backdrop-blur-lg flex items-start gap-3 z-50 transform translate-y-20 opacity-0 pointer-events-none">
+    <div id="toast-icon-bg" class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0">
+      <svg id="toast-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+    </div>
+    <div class="flex-1 pr-2">
+      <h4 id="toast-title" class="text-sm font-semibold text-white">Notice</h4>
+      <p id="toast-message" class="text-xs text-gray-300 mt-0.5"></p>
+    </div>
+    <button onclick="hideToast()" class="text-gray-400 hover:text-white focus:outline-none">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+  // Simulated Backend User Database
+  const KNOWN_USERS = {
+    'admin@scholartrack.com': { role: 'ADMIN', name: 'ScholarTrack Administrator' },
+    'student@scholartrack.com': { role: 'STUDENT', name: 'Jordan Lee' }
+  };
+
+  // Switch between Login / Register Views
+  function switchView(view) {
+    clearErrors();
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('view-register').classList.add('hidden');
+    document.getElementById('view-authenticated').classList.add('hidden');
+
+    if (view === 'login') {
+      document.getElementById('view-login').classList.remove('hidden');
+    } else if (view === 'register') {
+      document.getElementById('view-register').classList.remove('hidden');
+    }
+  }
+
+  // Toggle Password Field Visibility
+  function togglePassword(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908a10.02 10.02 0 013.682-.782c4.478 0 8.268 2.943 9.542 7a9.97 9.97 0 01-2.49 3.935m-2.222 2.22A9.95 9.95 0 0112 15c-1.38 0-2.686-.28-3.875-.785M3 3l18 18" />`;
+    } else {
+      input.type = 'password';
+      icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+    }
+  }
+
+  // Quick-Fill Helper for Testing
+  function quickFill(role) {
+    switchView('login');
+    if (role === 'student') {
+      document.getElementById('login-email').value = 'student@scholartrack.com';
+      document.getElementById('login-password').value = 'Scholar2026!';
+      showToast('Quick-Fill Applied', 'Populated student credentials.', 'info');
+    } else if (role === 'admin') {
+      document.getElementById('login-email').value = 'admin@scholartrack.com';
+      document.getElementById('login-password').value = 'AdminSecure2026!';
+      showToast('Quick-Fill Applied', 'Populated admin credentials.', 'info');
+    }
+  }
+
+  function simulateServerError() {
+    showAlert('login-alert', 'Network/Server Error: Unable to reach authentication server. Please try again later.', 'error');
+    showToast('Connection Refused', 'Simulated 500 Internal Server Error.', 'error');
+  }
+
+  // Clear Validation Errors
+  function clearErrors() {
+    ['login-alert', 'register-alert'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+    
+    document.querySelectorAll('.input-field').forEach(el => el.classList.remove('error'));
+    document.querySelectorAll('[id$="-err"]').forEach(el => {
+      el.innerText = '';
+      el.classList.add('hidden');
+    });
+  }
+
+  function setFieldError(fieldId, errId, message) {
+    const input = document.getElementById(fieldId);
+    const errText = document.getElementById(errId);
+    input.classList.add('error');
+    errText.innerText = message;
+    errText.classList.remove('hidden');
+  }
+
+  function showAlert(alertId, message, type = 'error') {
+    const banner = document.getElementById(alertId);
+    const msg = document.getElementById(alertId + '-msg');
+    const icon = document.getElementById(alertId + '-icon');
+
+    msg.innerText = message;
+    banner.classList.remove('hidden', 'bg-red-500/10', 'border-red-500/30', 'text-red-300', 'bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-300');
+
+    if (type === 'error') {
+      banner.classList.add('bg-red-500/10', 'border-red-500/30', 'text-red-300');
+      icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />`;
+    } else {
+      banner.classList.add('bg-emerald-500/10', 'border-emerald-500/30', 'text-emerald-300');
+      icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />`;
+    }
+  }
+
+  // Handle Login Submission
+  function handleLogin(e) {
+    e.preventDefault();
+    clearErrors();
+
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    let hasError = false;
+
+    // Validate Email
+    if (!email) {
+      setFieldError('login-email', 'login-email-err', 'Email address is required.');
+      hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setFieldError('login-email', 'login-email-err', 'Please enter a valid email address.');
+      hasError = true;
+    }
+
+    // Validate Password
+    if (!password) {
+      setFieldError('login-password', 'login-password-err', 'Password is required.');
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    // Set Loading State
+    setBtnLoading('login', true);
+
+    setTimeout(() => {
+      setBtnLoading('login', false);
+
+      // Verify Credentials & Evaluate Role
+      const user = KNOWN_USERS[email.toLowerCase()];
+
+      if (user) {
+        // Auth Success
+        showAuthenticatedState(user, email);
+      } else {
+        // Auth Failed: Invalid Credentials
+        showAlert('login-alert', 'Invalid email or password. Please check your credentials.', 'error');
+        setFieldError('login-email', 'login-email-err', '');
+        setFieldError('login-password', 'login-password-err', '');
+      }
+    }, 1000);
+  }
+
+  // Handle Registration Submission
+  function handleRegister(e) {
+    e.preventDefault();
+    clearErrors();
+
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const confirm = document.getElementById('reg-confirm').value;
+    let hasError = false;
+
+    if (!name) {
+      setFieldError('reg-name', 'reg-name-err', 'Full name is required.');
+      hasError = true;
+    }
+
+    if (!email) {
+      setFieldError('reg-email', 'reg-email-err', 'Email address is required.');
+      hasError = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setFieldError('reg-email', 'reg-email-err', 'Please enter a valid email address.');
+      hasError = true;
+    }
+
+    if (!password) {
+      setFieldError('reg-password', 'reg-password-err', 'Password is required.');
+      hasError = true;
+    } else if (password.length < 8) {
+      setFieldError('reg-password', 'reg-password-err', 'Password must be at least 8 characters.');
+      hasError = true;
+    }
+
+    if (confirm !== password) {
+      setFieldError('reg-confirm', 'reg-confirm-err', 'Passwords do not match.');
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    // Check Account Conflict
+    if (KNOWN_USERS[email.toLowerCase()]) {
+      showAlert('register-alert', 'An account with this email already exists. Please log in.', 'error');
+      setFieldError('reg-email', 'reg-email-err', 'Account conflict');
+      return;
+    }
+
+    setBtnLoading('register', true);
+
+    setTimeout(() => {
+      setBtnLoading('register', false);
+      
+      // Save Student Account (No admin registration possible)
+      KNOWN_USERS[email.toLowerCase()] = { role: 'STUDENT', name: name };
+      
+      showToast('Account Created!', 'Your student account has been successfully registered.', 'success');
+      showAuthenticatedState({ role: 'STUDENT', name: name }, email);
+    }, 1200);
+  }
+
+  function setBtnLoading(formType, isLoading) {
+    const btn = document.getElementById(`btn-${formType}-submit`);
+    const text = document.getElementById(`${formType}-btn-text`);
+    const spinner = document.getElementById(`${formType}-spinner`);
+
+    btn.disabled = isLoading;
+    if (isLoading) {
+      spinner.classList.remove('hidden');
+      text.innerText = formType === 'login' ? 'Authenticating...' : 'Creating Account...';
+    } else {
+      spinner.classList.add('hidden');
+      text.innerText = formType === 'login' ? 'Log In' : 'Create Account';
+    }
+  }
+
+  // Display Evaluated Role Routing Screen
+  function showAuthenticatedState(user, email) {
+    document.getElementById('view-login').classList.add('hidden');
+    document.getElementById('view-register').classList.add('hidden');
+    document.getElementById('view-authenticated').classList.remove('hidden');
+
+    const roleIcon = document.getElementById('auth-role-icon');
+    const badge = document.getElementById('auth-role-badge');
+    const heading = document.getElementById('auth-welcome-heading');
+    const subtext = document.getElementById('auth-redirect-subtext');
+    const roleEvaluated = document.getElementById('auth-role-evaluated');
+    const targetUrl = document.getElementById('auth-target-url');
+
+    heading.innerText = `Welcome, ${user.name}`;
+    roleEvaluated.innerText = user.role;
+
+    if (user.role === 'ADMIN') {
+      badge.className = 'inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30';
+      badge.innerText = 'Administrator Account';
+      targetUrl.innerText = '/admin/dashboard';
+      subtext.innerText = 'Redirecting to Admin Dashboard... Backend authorization verified.';
+      roleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />`;
+    } else {
+      badge.className = 'inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-500/30';
+      badge.innerText = 'Student Account';
+      targetUrl.innerText = '/student/discover';
+      subtext.innerText = 'Redirecting to Student Scholarship Discovery...';
+      roleIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />`;
+    }
+  }
+
+  function logout() {
+    switchView('login');
+    showToast('Logged Out', 'You have been safely signed out.', 'info');
+  }
+
+  // Toast System
+  let toastTimeout;
+  function showToast(title, message, type = 'info') {
+    clearTimeout(toastTimeout);
+    const toast = document.getElementById('toast');
+    const toastTitle = document.getElementById('toast-title');
+    const toastMsg = document.getElementById('toast-message');
+    const iconBg = document.getElementById('toast-icon-bg');
+    const icon = document.getElementById('toast-icon');
+
+    toastTitle.innerText = title;
+    toastMsg.innerText = message;
+
+    if (type === 'success') {
+      iconBg.className = 'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>`;
+    } else if (type === 'error') {
+      iconBg.className = 'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-red-500/20 text-red-400 border border-red-500/30';
+      icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>`;
+    } else {
+      iconBg.className = 'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-blue-500/20 text-blue-400 border border-blue-500/30';
+      icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>`;
+    }
+
+    toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+    toastTimeout = setTimeout(() => {
+      hideToast();
+    }, 4000);
+  }
+
+  function hideToast() {
+    const toast = document.getElementById('toast');
+    toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+  }
+</script>
+</html>
